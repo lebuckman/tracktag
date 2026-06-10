@@ -1,11 +1,33 @@
+import { useEffect, useState } from 'react'
 import { Toaster } from 'sonner'
 import { GradientDots } from './components/GradientDots'
 import { PixelCursorTrail } from './components/PixelCursorTrail'
 import { GithubLink } from './components/GithubLink'
+import { SettingsButton } from './components/SettingsButton'
 import { KitchenSink } from './components/KitchenSink'
+import { Onboarding } from './components/Onboarding'
+import { Flow } from './components/Flow'
+
+type View = 'loading' | 'onboarding' | 'flow'
 
 function App(): React.JSX.Element {
   const sink = window.location.hash === '#sink'
+  const [view, setView] = useState<View>('loading')
+  const [hasKey, setHasKey] = useState(false)
+
+  useEffect(() => {
+    Promise.all([window.api.hasGeminiKey(), window.api.isOnboarded()]).then(
+      ([keySet, onboarded]) => {
+        setHasKey(keySet)
+        setView(keySet && onboarded ? 'flow' : 'onboarding')
+      }
+    )
+  }, [])
+
+  function finishOnboarding(): void {
+    setHasKey(true)
+    setView('flow')
+  }
 
   return (
     <>
@@ -14,13 +36,14 @@ function App(): React.JSX.Element {
       <div className="relative">
         {sink ? (
           <KitchenSink />
-        ) : (
-          <main className="flex min-h-screen items-center justify-center">
-            <h1 className="tt-display text-4xl">TrackTag</h1>
-          </main>
-        )}
+        ) : view === 'onboarding' ? (
+          <Onboarding hasKey={hasKey} onDone={finishOnboarding} />
+        ) : view === 'flow' ? (
+          <Flow />
+        ) : null}
       </div>
       <GithubLink />
+      {view === 'flow' && !sink && <SettingsButton onClick={() => setView('onboarding')} />}
       <Toaster
         theme="dark"
         position="bottom-right"
