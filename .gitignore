@@ -1,0 +1,23 @@
+# Node
+node_modules
+*.log*
+.eslintcache
+
+# Build output
+dist
+out
+
+# Electron binaries staged for bundling
+resources/bin
+
+# Env
+.env
+.env.*
+
+# macOS
+.DS_Store
+
+# IDE
+.idea
+.vscode/*
+!.vscode/extensions.json
