@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <defs>
+    <!-- Single mask: cuts the label ring + the music-note halo out of the
+         record body. The spindle area stays solid (white in the mask), so
+         the tiny center dot is the record colour, exactly like the
+         reference PNG. -->
+    <mask id="tt-cutouts">
+      <rect width="24" height="24" fill="white"/>
+      <!-- Label ring — cut away -->
+      <circle cx="9" cy="10" r="2.8" fill="black"/>
+      <!-- Spindle — keep (so it punches back through the label) -->
+      <circle cx="9" cy="10" r="0.7" fill="white"/>
+      <!-- Note halo — thicker version of the note shape, so a clean gap
+           appears around the note where it overlaps the record. -->
+      <g fill="black" stroke="black" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="11.5" y1="19" x2="11.5" y2="12"/>
+        <line x1="18" y1="19.5" x2="18" y2="12.5"/>
+        <line x1="11.5" y1="12" x2="18" y2="12.5"/>
+        <ellipse cx="11" cy="19.5" rx="2.7" ry="2" stroke="none"/>
+        <ellipse cx="17.5" cy="20" rx="2.7" ry="2" stroke="none"/>
+      </g>
+    </mask>
+  </defs>
+
+  <!-- Record body, single colour, with the mask carving the label + halo. -->
+  <circle cx="9" cy="10" r="8.5" fill="#d4b48c" mask="url(#tt-cutouts)"/>
+
+  <!-- Music note drawn on top, sized to sit inside the cutout halo. -->
+  <g fill="#d4b48c" stroke="#d4b48c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="11.5" y1="19" x2="11.5" y2="12"/>
+    <line x1="18" y1="19.5" x2="18" y2="12.5"/>
+    <line x1="11.5" y1="12" x2="18" y2="12.5"/>
+    <ellipse cx="11" cy="19.5" rx="1.7" ry="1.25" stroke="none"/>
+    <ellipse cx="17.5" cy="20" rx="1.7" ry="1.25" stroke="none"/>
+  </g>
+</svg>
