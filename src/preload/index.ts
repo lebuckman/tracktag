@@ -1,22 +1,31 @@
-import { contextBridge } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
+import type { Api, PrefillInput, SavePayload } from '../shared/types'
 
-// Custom APIs for renderer
-const api = {}
+// Mirrors the web app's server actions. Every method round-trips through
+// ipcMain.handle in src/main/ipc.ts and returns the same discriminated
+// union shapes the original actions did.
+const api: Api = {
+  fetchVideoInfo: (url) => ipcRenderer.invoke('fetchVideoInfo', url),
+  fetchVideoDuration: (url) => ipcRenderer.invoke('fetchVideoDuration', url),
+  prefillMetadata: (input: PrefillInput) => ipcRenderer.invoke('prefillMetadata', input),
+  saveFile: (payload: SavePayload) => ipcRenderer.invoke('saveFile', payload),
+  pickFolder: () => ipcRenderer.invoke('pickFolder'),
+  readLastFolder: () => ipcRenderer.invoke('readLastFolder'),
+  setLastFolder: (folder) => ipcRenderer.invoke('setLastFolder', folder),
+  getPathForFile: (file) => webUtils.getPathForFile(file),
+  hasGeminiKey: () => ipcRenderer.invoke('hasGeminiKey'),
+  setGeminiKey: (key) => ipcRenderer.invoke('setGeminiKey', key),
+  isOnboarded: () => ipcRenderer.invoke('isOnboarded'),
+  setOnboarded: () => ipcRenderer.invoke('setOnboarded')
+}
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('api', api)
   } catch (error) {
     console.error(error)
   }
 } else {
-  // @ts-ignore (define in dts)
-  window.electron = electronAPI
   // @ts-ignore (define in dts)
   window.api = api
 }
