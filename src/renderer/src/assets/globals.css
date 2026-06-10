@@ -1,0 +1,620 @@
+@import "tailwindcss";
+
+/* Bundled fonts — the web app loaded these via next/font/google; a desktop
+   app must not depend on a CDN, so the same three families ship locally. */
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/instrument-sans";
+@import "@fontsource-variable/jetbrains-mono";
+
+:root {
+  --font-bricolage: "Bricolage Grotesque Variable", sans-serif;
+  --font-instrument: "Instrument Sans Variable", sans-serif;
+  --font-jetbrains: "JetBrains Mono Variable", monospace;
+}
+
+@theme inline {
+  --color-bg: #08080b;
+  /* Elevation scale — higher index = "closer to the user" / lighter
+     so chrome stacks correctly when the bg is animated and colorful. */
+  --color-elev-1: #12121a; /* cards, large surfaces */
+  --color-elev-2: #1c1c25; /* inputs, drop zones, toggle pills */
+  --color-elev-3: #26262f; /* buttons, active tab, chips */
+  --color-elev-hover: #303039;
+
+  --color-surface: var(--color-elev-2);
+  --color-surface-hover: var(--color-elev-3);
+  --color-border: rgba(255, 255, 255, 0.14);
+  --color-border-strong: rgba(255, 255, 255, 0.32);
+
+  --color-text: #f8f6f1;
+  --color-text-muted: #c9c5be;
+  --color-text-dim: #8e8a82;
+  --color-text-faint: #4a4843;
+
+  --color-accent: #d4b48c;
+  --color-accent-soft: rgba(212, 180, 140, 0.16);
+  --color-accent-glow: rgba(212, 180, 140, 0.45);
+
+  --color-danger: #d97a6c;
+
+  --font-display: var(--font-bricolage);
+  --font-sans: var(--font-instrument);
+  --font-mono: var(--font-jetbrains);
+}
+
+html {
+  background-color: var(--color-bg);
+  scrollbar-gutter: stable;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Empty white circle cursor — same size as the trail dots, so the cursor
+   looks like the head of its own trail. Forced on every element with
+   !important so links/buttons/inputs never swap in OS pointers or carets. */
+*,
+*::before,
+*::after {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><circle cx='12' cy='12' r='6' fill='none' stroke='white' stroke-width='1.6' opacity='0.92'/></svg>")
+      12 12,
+    default !important;
+}
+
+::selection {
+  background: var(--color-accent-soft);
+  color: var(--color-text);
+}
+
+/* ---------------- Surfaces ---------------- */
+
+.tt-card {
+  border: 1px solid var(--color-border);
+  background: var(--color-elev-1);
+  border-radius: 18px;
+}
+
+/* ---------------- Inputs ---------------- */
+
+.tt-input {
+  background: var(--color-elev-1);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 0.9rem 1.1rem;
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  width: 100%;
+  transition:
+    border-color 220ms ease,
+    background-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.tt-input::placeholder {
+  color: var(--color-text-dim);
+}
+
+.tt-input:hover:not(:focus) {
+  border-color: var(--color-border-strong);
+  background: var(--color-elev-2);
+}
+
+.tt-input:focus {
+  outline: none;
+  border-color: var(--color-border-strong);
+  background: var(--color-elev-2);
+}
+
+.tt-input--mono {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+}
+
+/* Chip-style input (used by artists field). Sized to feel like a tt-input,
+   with chips inside that flow and wrap. */
+.tt-chip-input {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-elev-1);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 0.55rem 0.7rem;
+  /* Match tt-input height when empty: 1.05rem text * 1.55 lh + 0.9rem*2 padding + 2px border */
+  min-height: calc(1.05rem * 1.55 + 1.8rem + 2px);
+  font-family: var(--font-sans);
+  transition:
+    border-color 220ms ease,
+    background-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.tt-chip-input:hover,
+.tt-chip-input:focus-within {
+  border-color: var(--color-border-strong);
+  background: var(--color-elev-2);
+}
+
+.tt-chip-input > input {
+  background: transparent;
+  border: 0;
+  outline: none;
+  flex: 1;
+  min-width: 120px;
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  padding: 0 0.4rem;
+}
+
+.tt-chip-input > input::placeholder {
+  color: var(--color-text-dim);
+}
+
+.tt-chip-input__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.6rem 0.3rem 0.7rem;
+  border-radius: 7px;
+  background: var(--color-elev-3);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.tt-chip-input__remove {
+  color: var(--color-text-dim);
+  font-size: 1.1em;
+  line-height: 1;
+  padding: 0 2px;
+  transition: color 160ms ease;
+}
+
+.tt-chip-input__remove:hover {
+  color: var(--color-text);
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px var(--color-accent-glow),
+      0 0 18px var(--color-accent-soft);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px var(--color-accent-glow),
+      0 0 36px var(--color-accent-glow);
+  }
+}
+
+/* AI active glow — strong (currently being filled) */
+.tt-glow {
+  border-color: var(--color-accent-glow) !important;
+  background: var(--color-accent-soft) !important;
+  animation: glow-pulse 1.6s ease-in-out infinite;
+}
+
+/* AI affected glow — soft (will be filled or already filled in this run) */
+.tt-glow-soft {
+  border-color: var(--color-accent-soft) !important;
+  box-shadow: 0 0 0 1px var(--color-accent-soft);
+}
+
+/* Distinct loading state — faster cadence, border-color rides the pulse
+   too so motion is unmistakable. */
+@keyframes glow-loading {
+  0%,
+  100% {
+    border-color: var(--color-accent-soft);
+    box-shadow:
+      0 0 0 1px var(--color-accent-soft),
+      0 0 14px rgba(212, 180, 140, 0.3);
+  }
+  50% {
+    border-color: var(--color-accent);
+    box-shadow:
+      0 0 0 1px var(--color-accent),
+      0 0 38px rgba(212, 180, 140, 0.7);
+  }
+}
+
+.tt-glow-loading {
+  border-color: var(--color-accent-glow) !important;
+  background: var(--color-accent-soft) !important;
+  animation: glow-loading 1.1s ease-in-out infinite;
+}
+
+/* Error glow — danger-tinted pulse used to flag invalid input. */
+@keyframes glow-error {
+  0%,
+  100% {
+    border-color: rgba(217, 122, 108, 0.55);
+    box-shadow:
+      0 0 0 1px rgba(217, 122, 108, 0.45),
+      0 0 14px rgba(217, 122, 108, 0.25);
+  }
+  50% {
+    border-color: var(--color-danger);
+    box-shadow:
+      0 0 0 1px var(--color-danger),
+      0 0 32px rgba(217, 122, 108, 0.55);
+  }
+}
+
+.tt-glow-error {
+  border-color: var(--color-danger) !important;
+  background: rgba(217, 122, 108, 0.08) !important;
+  animation: glow-error 1.6s ease-in-out infinite;
+}
+
+/* ---------------- Typography helpers ---------------- */
+
+/* Labels are non-interactive markers — an accent bar sits to the left of
+   small-caps mono text. Halo shadow keeps them readable when the gradient
+   wanders bright. Distinct from buttons (which are filled chips). */
+.tt-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  background: transparent;
+  padding: 0;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.85),
+    0 0 8px rgba(0, 0, 0, 0.55);
+}
+
+.tt-label::before {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 14px;
+  background: var(--color-accent);
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(212, 180, 140, 0.55);
+}
+
+.tt-meta {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.8),
+    0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+.tt-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+  color: var(--color-text);
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.85),
+    0 0 18px rgba(0, 0, 0, 0.45);
+}
+
+/* ---------------- Buttons ---------------- */
+
+/* Buttons are solid filled chips — clear affordance, lighter than the
+   surfaces around them. Primary uses the accent fill (top of hierarchy). */
+.tt-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.78rem 1.3rem;
+  border-radius: 10px;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-elev-3);
+  color: var(--color-text);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.5);
+  transition:
+    border-color 200ms ease,
+    background-color 200ms ease,
+    color 200ms ease,
+    transform 120ms ease;
+  cursor: pointer;
+}
+
+.tt-btn:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: var(--color-elev-hover);
+}
+
+.tt-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.tt-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tt-btn-primary {
+  border-color: var(--color-accent);
+  color: var(--color-bg);
+  background: var(--color-accent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 4px 16px rgba(212, 180, 140, 0.25);
+}
+
+.tt-btn-primary:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-bg);
+  filter: brightness(1.08);
+}
+
+/* Primary disabled — stay fully opaque so the button doesn't look ghosted.
+   Swap the accent fill for a muted surface to signal "not actionable". The
+   border is a solid colour (not the alpha-based --color-border) so the rim
+   doesn't let the animated bg show through. */
+.tt-btn-primary:disabled {
+  opacity: 1;
+  background: var(--color-elev-3);
+  border-color: var(--color-elev-hover);
+  color: var(--color-text-dim);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.tt-btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-text-muted);
+  box-shadow: none;
+}
+
+/* Danger-tinted ghost — destructive actions (Remove, Delete). Stays subtle
+   until hover, then turns danger-red so the consequence reads clearly. */
+.tt-btn-danger-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-text-muted);
+  box-shadow: none;
+}
+
+.tt-btn-danger-ghost:hover:not(:disabled) {
+  color: var(--color-danger);
+  background: rgba(217, 122, 108, 0.08);
+  border-color: rgba(217, 122, 108, 0.32);
+}
+
+/* Minimal text action — bare text by default, solid surface on hover.
+   Used by the album-art Replace/Remove pair. */
+.tt-action {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.tt-action:hover {
+  background: var(--color-elev-3);
+  color: var(--color-text);
+}
+
+/* Segmented toggle tab — used by the YouTube/File switcher. Active state
+   is driven by aria-selected so React only flips the attribute. */
+.tt-tab {
+  padding: 0.5rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  background: transparent;
+  border-radius: 8px;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease;
+}
+
+.tt-tab:hover:not([aria-selected="true"]) {
+  color: var(--color-text);
+  background: var(--color-elev-2);
+}
+
+.tt-tab[aria-selected="true"] {
+  color: var(--color-text);
+  background: var(--color-elev-3);
+}
+
+/* ---------------- Sonner toast theming ---------------- */
+
+.tt-toast {
+  background: var(--color-elev-1) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text) !important;
+  font-family: var(--font-sans) !important;
+  border-radius: 12px !important;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+  padding: 14px 16px !important;
+  gap: 10px !important;
+}
+
+.tt-toast--error {
+  border-color: rgba(217, 122, 108, 0.5) !important;
+  background:
+    linear-gradient(
+      0deg,
+      rgba(217, 122, 108, 0.06),
+      rgba(217, 122, 108, 0.06)
+    ),
+    var(--color-elev-1) !important;
+}
+
+.tt-toast--error [data-icon] {
+  color: var(--color-danger) !important;
+}
+
+[data-sonner-toast] [data-close-button] {
+  background: var(--color-elev-2) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text-muted) !important;
+  border-radius: 6px !important;
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  color: var(--color-text) !important;
+  background: var(--color-elev-3) !important;
+  border-color: var(--color-border-strong) !important;
+}
+
+.tt-btn-ghost:hover:not(:disabled) {
+  color: var(--color-text);
+  background: var(--color-elev-2);
+  border-color: var(--color-border);
+}
+
+/* Accent-tinted glow halo around the Autofill button. */
+.tt-btn-aura {
+  border-color: var(--color-accent-glow);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px var(--color-accent-soft),
+    0 0 28px rgba(212, 180, 140, 0.45),
+    0 0 64px rgba(212, 180, 140, 0.22);
+}
+
+.tt-btn-aura:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  background: var(--color-elev-hover);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px var(--color-accent-glow),
+    0 0 36px rgba(212, 180, 140, 0.65),
+    0 0 80px rgba(212, 180, 140, 0.3);
+}
+
+/* While the autofill is in flight the button is disabled — keep the
+   "Thinking…" text readable and intensify the glow as feedback. */
+.tt-btn-aura:disabled {
+  opacity: 0.95;
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px var(--color-accent-glow),
+    0 0 36px rgba(212, 180, 140, 0.6),
+    0 0 80px rgba(212, 180, 140, 0.28);
+  animation: glow-pulse 1.6s ease-in-out infinite;
+}
+
+/* ---------------- Corner GitHub link ---------------- */
+
+/* Persistent fixed-corner source link. Subtle by default — elev-1
+   surface, dim icon — so it never competes with content. On hover it
+   adopts the accent glow vocabulary used by tt-btn-aura (scaled down)
+   and lifts 1px so it reads as a real affordance. */
+.tt-github-link {
+  border: 1px solid var(--color-border);
+  background: var(--color-elev-1);
+  color: var(--color-text-dim);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 1px 2px rgba(0, 0, 0, 0.5);
+  transition:
+    color 200ms ease,
+    border-color 200ms ease,
+    background-color 200ms ease,
+    box-shadow 200ms ease,
+    transform 160ms ease;
+}
+
+.tt-github-link:hover {
+  color: var(--color-text);
+  border-color: var(--color-accent-glow);
+  background: var(--color-elev-2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px var(--color-accent-soft),
+    0 0 18px rgba(212, 180, 140, 0.35);
+  transform: translateY(-1px);
+}
+
+.tt-github-link:active {
+  transform: translateY(0);
+}
+
+/* ---------------- Animations ---------------- */
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.anim-rise {
+  animation: rise-in 540ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes pulse-wave {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.waveform-bar {
+  display: inline-block;
+  width: 3px;
+  height: 28px;
+  background: var(--color-accent);
+  border-radius: 2px;
+  transform-origin: center;
+  animation: pulse-wave 1.1s ease-in-out infinite;
+}
