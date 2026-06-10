@@ -16,6 +16,9 @@ function App(): React.JSX.Element {
   const [hasKey, setHasKey] = useState(false)
 
   useEffect(() => {
+    // window.api only exists inside Electron — a plain browser tab pointed
+    // at the dev server (e.g. for the #sink gallery) stays on 'loading'.
+    if (!window.api) return
     Promise.all([window.api.hasGeminiKey(), window.api.isOnboarded()]).then(
       ([keySet, onboarded]) => {
         setHasKey(keySet)
