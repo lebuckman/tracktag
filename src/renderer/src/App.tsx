@@ -1,20 +1,25 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { toast, Toaster } from 'sonner'
 import { GradientDots } from './components/GradientDots'
 import { PixelCursorTrail } from './components/PixelCursorTrail'
 import { GithubLink } from './components/GithubLink'
 import { SettingsButton } from './components/SettingsButton'
-import { KitchenSink } from './components/KitchenSink'
 import { Onboarding } from './components/Onboarding'
 import { Flow } from './components/Flow'
 import { installDevApiStub } from './lib/devApiStub'
 
 installDevApiStub()
 
+// Dev-only gallery; the DEV gate folds away in production builds so the
+// chunk is never emitted or reachable.
+const KitchenSink = import.meta.env.DEV
+  ? lazy(() => import('./components/KitchenSink').then((m) => ({ default: m.KitchenSink })))
+  : null
+
 type View = 'loading' | 'onboarding' | 'flow'
 
 function App(): React.JSX.Element {
-  const sink = window.location.hash === '#sink'
+  const sink = !!KitchenSink && window.location.hash === '#sink'
   const [view, setView] = useState<View>('loading')
   const [hasKey, setHasKey] = useState(false)
   // Settings reuses the onboarding screen but renders OVER the flow while
@@ -62,8 +67,10 @@ function App(): React.JSX.Element {
       <GradientDots />
       <PixelCursorTrail />
       <div className="relative">
-        {sink ? (
-          <KitchenSink />
+        {sink && KitchenSink ? (
+          <Suspense fallback={null}>
+            <KitchenSink />
+          </Suspense>
         ) : view === 'onboarding' ? (
           <Onboarding hasKey={hasKey} onDone={finishOnboarding} />
         ) : view === 'flow' ? (
