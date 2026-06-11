@@ -7,8 +7,9 @@ type ConfigSchema = {
   lastYtdlpCheck?: number
 }
 
-// The Gemini key lives only in this store, read only by the main process.
-// The renderer can set it and ask whether one exists — never read it back.
+// The Gemini key never leaves this machine: Gemini calls happen in the
+// main process, and the renderer only reads it back for the settings
+// reveal toggle.
 const store = new Store<ConfigSchema>()
 
 export function getLastSaveFolder(): string {

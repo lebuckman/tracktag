@@ -31,6 +31,12 @@ function createWindow(): BrowserWindow {
     return { action: 'deny' }
   })
 
+  // A file dropped outside the drop zone would otherwise navigate the
+  // window to its file:// URL and blank the app.
+  mainWindow.webContents.on('will-navigate', (event) => {
+    event.preventDefault()
+  })
+
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
