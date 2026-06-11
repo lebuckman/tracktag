@@ -14,6 +14,10 @@ function App(): React.JSX.Element {
   const sink = window.location.hash === '#sink'
   const [view, setView] = useState<View>('loading')
   const [hasKey, setHasKey] = useState(false)
+  // Settings reuses the onboarding screen but renders OVER the flow while
+  // the flow stays mounted (display:none) — closing it must not lose an
+  // in-progress source/metadata edit.
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   useEffect(() => {
     // window.api only exists inside Electron — a plain browser tab pointed
@@ -59,11 +63,26 @@ function App(): React.JSX.Element {
         ) : view === 'onboarding' ? (
           <Onboarding hasKey={hasKey} onDone={finishOnboarding} />
         ) : view === 'flow' ? (
-          <Flow />
+          <>
+            {settingsOpen && (
+              <Onboarding
+                hasKey={hasKey}
+                onDone={() => {
+                  setHasKey(true)
+                  setSettingsOpen(false)
+                }}
+              />
+            )}
+            <div className={settingsOpen ? 'hidden' : ''}>
+              <Flow />
+            </div>
+          </>
         ) : null}
       </div>
       <GithubLink />
-      {view === 'flow' && !sink && <SettingsButton onClick={() => setView('onboarding')} />}
+      {view === 'flow' && !sink && !settingsOpen && (
+        <SettingsButton onClick={() => setSettingsOpen(true)} />
+      )}
       <Toaster
         theme="dark"
         position="bottom-right"

@@ -46,28 +46,18 @@ html {
   background-color: var(--color-bg);
 }
 
-/* Transparent scrollbar so the ambient layer runs edge to edge. The web
-   version reserved a gutter (scrollbar-gutter: stable); in Electron the
-   bar overlays the page instead, with a subtle thumb in the border tones. */
+/* No scrollbars at all — scrolling still works (wheel/trackpad/keys) and a
+   fixed ScrollHint chevron signals further content instead. This also kills
+   the white ::-webkit-scrollbar-corner square that flashed during the tab
+   switch when both axes briefly overflowed mid-animation. */
 ::-webkit-scrollbar {
-  width: 12px;
-  background: transparent;
+  width: 0;
+  height: 0;
+  display: none;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.14);
-  border-radius: 999px;
-  border: 3px solid transparent;
-  background-clip: padding-box;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.28);
-  background-clip: padding-box;
+body {
+  overflow-x: clip;
 }
 
 body {
@@ -512,6 +502,23 @@ body {
   color: var(--color-danger) !important;
 }
 
+/* Action button (used by the update toast) — small accent chip in the
+   button vocabulary instead of sonner's default white pill. */
+[data-sonner-toast] [data-button]:not([data-close-button]) {
+  background: var(--color-accent) !important;
+  color: var(--color-bg) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  border-radius: 6px !important;
+  transition: filter 160ms ease;
+}
+
+[data-sonner-toast] [data-button]:not([data-close-button]):hover {
+  filter: brightness(1.08);
+}
+
 [data-sonner-toast] [data-close-button] {
   background: var(--color-elev-2) !important;
   border: 1px solid var(--color-border) !important;
@@ -620,6 +627,21 @@ body {
 
 .anim-rise {
   animation: rise-in 540ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* Gentle bob for the more-content-below chevron. */
+@keyframes scroll-hint-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+}
+
+.anim-scroll-hint {
+  animation: scroll-hint-bob 1.8s ease-in-out infinite;
 }
 
 @keyframes pulse-wave {

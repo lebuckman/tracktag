@@ -96,12 +96,28 @@ export function KitchenSink(): React.JSX.Element {
 
       <section>
         <p className="tt-label mb-4 block">Toasts</p>
-        <button
-          className="tt-btn"
-          onClick={() => toast.error('Persistent error toast', { id: 'sink' })}
-        >
-          Fire error toast
-        </button>
+        <div className="flex flex-wrap gap-4">
+          <button
+            className="tt-btn"
+            onClick={() => toast.error('Persistent error toast', { id: 'sink' })}
+          >
+            Fire error toast
+          </button>
+          <button
+            className="tt-btn"
+            onClick={() =>
+              toast('TrackTag 0.2.0 is available', {
+                id: 'app-update',
+                action: {
+                  label: 'Get it',
+                  onClick: () => {}
+                }
+              })
+            }
+          >
+            Fire update toast
+          </button>
+        </div>
       </section>
     </div>
   )

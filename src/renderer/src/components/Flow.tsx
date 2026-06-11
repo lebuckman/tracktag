@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { SourceSelector } from './SourceSelector'
 import { MetadataForm } from './MetadataForm'
 import { SaveControls } from './SaveControls'
+import { ScrollHint } from './ScrollHint'
 import type { Metadata, Source, TrimRange } from '@shared/types'
 
 const EMPTY_TRIM: TrimRange = { startSec: null, endSec: null }
@@ -89,6 +90,7 @@ export function Flow(): React.JSX.Element {
               />
             </Reveal>
           </div>
+          <ScrollHint />
         </motion.div>
       )}
     </AnimatePresence>
