@@ -1,8 +1,9 @@
 import NodeID3 from 'node-id3'
 
+// All tags optional — empty fields are simply not written to the frame.
 type Id3Tags = {
-  title: string
-  artist: string
+  title?: string
+  artist?: string
   album?: string
   albumArt?: {
     buffer: Buffer
@@ -11,10 +12,9 @@ type Id3Tags = {
 }
 
 export function writeTags(mp3Path: string, tags: Id3Tags): void {
-  const payload: NodeID3.Tags = {
-    title: tags.title,
-    artist: tags.artist
-  }
+  const payload: NodeID3.Tags = {}
+  if (tags.title) payload.title = tags.title
+  if (tags.artist) payload.artist = tags.artist
   if (tags.album) payload.album = tags.album
   if (tags.albumArt) {
     payload.image = {

@@ -134,8 +134,6 @@ async function saveFile(payload: SavePayload): Promise<SaveResult> {
     const start = payload.trimStartSec
     const end = payload.trimEndSec
 
-    if (!title) return { ok: false, error: 'Title is required' }
-    if (!artist) return { ok: false, error: 'At least one artist is required' }
     if (!rawFileName) return { ok: false, error: 'File name is required' }
     if (!rawFolder) return { ok: false, error: 'Save folder is required' }
 
@@ -189,8 +187,8 @@ async function saveFile(payload: SavePayload): Promise<SaveResult> {
         : undefined
 
     writeTags(finalIntermediate, {
-      title,
-      artist,
+      title: title || undefined,
+      artist: artist || undefined,
       album: album || undefined,
       albumArt
     })

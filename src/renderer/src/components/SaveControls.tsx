@@ -39,12 +39,9 @@ export function SaveControls({ source, file, trim, metadata, onSaved }: Props): 
     })
   }
 
+  // Tags are optional — only a file name and destination are required.
   const canSave =
-    !!metadata.title.trim() &&
-    metadata.artists.length > 0 &&
-    !!metadata.fileName.trim() &&
-    !!folder.trim() &&
-    (source.kind === 'youtube' || file !== null)
+    !!metadata.fileName.trim() && !!folder.trim() && (source.kind === 'youtube' || file !== null)
 
   function handleSave(): void {
     if (!canSave || pending || saved) return
