@@ -4,7 +4,7 @@ import path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { app, dialog, ipcMain, BrowserWindow } from 'electron'
 
-import { downloadAudio, fetchDuration, fetchYouTubeMeta } from './lib/ytdlp'
+import { downloadAudio, fetchYouTubeMeta, type YouTubeMeta } from './lib/ytdlp'
 import { convertToMp3 } from './lib/ffmpeg'
 import { writeTags } from './lib/id3'
 import { prefillFromText } from './lib/gemini'
@@ -53,6 +53,45 @@ function dataUrlToBuffer(dataUrl: string): { buffer: Buffer; mime: string } {
   return { mime: match[1], buffer: Buffer.from(match[2], 'base64') }
 }
 
+/** Map raw tool output to something a person can act on. */
+function friendlyError(message: string): string {
+  if (/sign in to confirm/i.test(message)) {
+    return 'YouTube temporarily flagged this connection as automated. It can happen after several downloads in a row. Wait a minute and try again.'
+  }
+  if (/RESOURCE_EXHAUSTED|"code"\s*:\s*429|exceeded your current quota/i.test(message)) {
+    return 'Gemini rate limit reached. Wait a minute and try again.'
+  }
+  return message
+}
+
+// yt-dlp metadata extraction takes 10s+, so it starts the moment a source
+// is set (not when Autofill is clicked) and one run serves both the trim
+// duration and the autofill text. Single slot — one source at a time.
+let metaCache: { url: string; promise: Promise<YouTubeMeta> } | null = null
+
+function prefetchMeta(url: string): Promise<YouTubeMeta> {
+  if (metaCache?.url === url) return metaCache.promise
+  const promise = fetchYouTubeMeta(url)
+  promise.catch(() => {}) // failures surface where the result is awaited
+  metaCache = { url, promise }
+  return promise
+}
+
+/** Awaits the prefetched metadata, retrying one fresh run if it failed. */
+async function getMeta(url: string): Promise<YouTubeMeta> {
+  try {
+    return await prefetchMeta(url)
+  } catch {
+    metaCache = null
+    try {
+      return await prefetchMeta(url)
+    } catch (err) {
+      metaCache = null
+      throw err
+    }
+  }
+}
+
 async function fetchVideoInfo(rawUrl: string): Promise<VideoInfoResult> {
   const videoId = parseVideoId(rawUrl)
   if (!videoId) {
@@ -75,6 +114,9 @@ async function fetchVideoInfo(rawUrl: string): Promise<VideoInfoResult> {
       title?: string
       author_name?: string
     }
+    // Start the slow yt-dlp extraction now so autofill and the trim
+    // duration are (mostly) ready by the time they are asked for.
+    void prefetchMeta(watchUrl(videoId))
     return {
       ok: true,
       source: {
@@ -98,10 +140,12 @@ async function prefillMetadata(input: PrefillInput): Promise<PrefillOutcome> {
 
     if (input.kind === 'youtube') {
       try {
-        const meta = await fetchYouTubeMeta(input.url)
+        const meta = await getMeta(input.url)
         title = meta.title
         description = meta.description
       } catch {
+        // Title-only fallback produces noticeably weaker tags; getMeta
+        // already retried once before landing here.
         title = input.fallbackTitle
       }
     } else {
@@ -117,7 +161,7 @@ async function prefillMetadata(input: PrefillInput): Promise<PrefillOutcome> {
   } catch (err) {
     console.error('[prefillMetadata]', err)
     const message = err instanceof Error ? err.message : 'Autofill failed'
-    return { ok: false, error: message }
+    return { ok: false, error: friendlyError(message) }
   }
 }
 
@@ -215,7 +259,7 @@ async function saveFile(payload: SavePayload): Promise<SaveResult> {
     return { ok: true, savedPath: finalPath }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Save failed'
-    return { ok: false, error: message }
+    return { ok: false, error: friendlyError(message) }
   } finally {
     await fs.rm(workDir, { recursive: true, force: true }).catch(() => {})
   }
@@ -238,7 +282,16 @@ async function pickFolder(win: BrowserWindow | null): Promise<PickFolderResult> 
 
 export function registerIpcHandlers(): void {
   ipcMain.handle('fetchVideoInfo', (_e, url: string) => fetchVideoInfo(url))
-  ipcMain.handle('fetchVideoDuration', (_e, url: string) => fetchDuration(url))
+  ipcMain.handle('fetchVideoDuration', async (_e, url: string) => {
+    // Served from the same prefetched dump-json as autofill — no extra
+    // yt-dlp run.
+    try {
+      return (await prefetchMeta(url)).duration
+    } catch {
+      metaCache = null
+      return null
+    }
+  })
   ipcMain.handle('prefillMetadata', (_e, input: PrefillInput) => prefillMetadata(input))
   ipcMain.handle('saveFile', (_e, payload: SavePayload) => saveFile(payload))
   ipcMain.handle('pickFolder', (e) => pickFolder(BrowserWindow.fromWebContents(e.sender)))

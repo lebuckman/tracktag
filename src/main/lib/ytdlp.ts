@@ -9,38 +9,35 @@ function run(args: string[]): Promise<RunResult> {
   return runBinary(binaryPath('yt-dlp'), args, { timeoutMs: TIMEOUT_MS, label: 'yt-dlp' })
 }
 
-export async function fetchYouTubeMeta(
-  url: string
-): Promise<{ title: string; description: string }> {
-  const result = await run(['--no-warnings', '--skip-download', '--dump-json', '--', url])
+export type YouTubeMeta = { title: string; description: string; duration: number | null }
+
+/**
+ * One dump-json run feeds both autofill (title + description) and the trim
+ * slider (duration). Extraction takes 10s+, so ipc.ts prefetches this as
+ * soon as a source is set rather than when Autofill is clicked.
+ */
+export async function fetchYouTubeMeta(url: string): Promise<YouTubeMeta> {
+  const result = await run([
+    '--no-warnings',
+    '--skip-download',
+    '--no-playlist',
+    '--dump-json',
+    '--',
+    url
+  ])
   if (result.code !== 0) {
     throw new Error(result.stderr.trim() || 'yt-dlp failed')
   }
   const parsed = JSON.parse(result.stdout) as {
     title?: string
     description?: string
+    duration?: number
   }
+  const duration = Number(parsed.duration)
   return {
     title: (parsed.title ?? '').trim(),
-    description: (parsed.description ?? '').trim()
-  }
-}
-
-export async function fetchDuration(url: string): Promise<number | null> {
-  try {
-    const result = await run([
-      '--no-warnings',
-      '--skip-download',
-      '--print',
-      '%(duration)s',
-      '--',
-      url
-    ])
-    if (result.code !== 0) return null
-    const n = Number(result.stdout.trim())
-    return Number.isFinite(n) && n > 0 ? Math.round(n) : null
-  } catch {
-    return null
+    description: (parsed.description ?? '').trim(),
+    duration: Number.isFinite(duration) && duration > 0 ? Math.round(duration) : null
   }
 }
 
