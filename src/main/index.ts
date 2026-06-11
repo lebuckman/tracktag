@@ -1,7 +1,6 @@
 import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+import { optimizer, is } from '@electron-toolkit/utils'
 import { registerIpcHandlers, cleanScratch } from './ipc'
 import { selfUpdateYtdlp, notifyIfAppUpdateAvailable } from './lib/updater'
 
@@ -17,10 +16,9 @@ function createWindow(): BrowserWindow {
     // Traffic lights float over the ambient background; the renderer
     // provides a drag strip along the top edge.
     titleBarStyle: 'hiddenInset',
-    ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: true
     }
   })
 
@@ -33,8 +31,6 @@ function createWindow(): BrowserWindow {
     return { action: 'deny' }
   })
 
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
@@ -45,10 +41,7 @@ function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(() => {
-  electronApp.setAppUserModelId('com.tracktag.app')
-
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
+  // F12 devtools in dev; swallow Cmd+R in production.
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
