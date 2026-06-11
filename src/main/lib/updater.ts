@@ -1,8 +1,8 @@
 import { app, BrowserWindow } from 'electron'
-import { spawn } from 'node:child_process'
 import { promises as fs, existsSync } from 'node:fs'
 import path from 'node:path'
 import { bundledBinaryPath } from './binaries'
+import { runBinary } from './spawn'
 import { getLastYtdlpCheck, setLastYtdlpCheck } from '../store'
 
 // yt-dlp is the part of the app that actually breaks (YouTube player
@@ -24,25 +24,14 @@ export function updatedYtdlpPath(): string {
   return path.join(updatedYtdlpDir(), 'yt-dlp')
 }
 
-function currentYtdlpVersion(): Promise<string> {
-  return new Promise((resolve) => {
+async function currentYtdlpVersion(): Promise<string> {
+  try {
     const bin = existsSync(updatedYtdlpPath()) ? updatedYtdlpPath() : bundledBinaryPath('yt-dlp')
-    const child = spawn(bin, ['--version'], { stdio: ['ignore', 'pipe', 'ignore'] })
-    let out = ''
-    const timer = setTimeout(() => {
-      child.kill('SIGKILL')
-      resolve('')
-    }, 10_000)
-    child.stdout.on('data', (c) => (out += c.toString()))
-    child.on('error', () => {
-      clearTimeout(timer)
-      resolve('')
-    })
-    child.on('close', () => {
-      clearTimeout(timer)
-      resolve(out.trim())
-    })
-  })
+    const result = await runBinary(bin, ['--version'], { timeoutMs: 10_000, label: 'yt-dlp' })
+    return result.code === 0 ? result.stdout.trim() : ''
+  } catch {
+    return ''
+  }
 }
 
 /**

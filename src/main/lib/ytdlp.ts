@@ -1,43 +1,12 @@
-import { spawn } from 'node:child_process'
 import { binaryPath } from './binaries'
+import { runBinary, type RunResult } from './spawn'
 
-type SpawnResult = { stdout: string; stderr: string; code: number | null }
-
-// yt-dlp normally completes in seconds. A stalled network or hung child
-// would otherwise hang the save pipeline indefinitely. 60s is generous
-// for fetchYouTubeMeta and long enough for most downloadAudio runs on a
-// reasonable connection.
+// yt-dlp normally completes in seconds. 60s is generous for metadata
+// fetches and long enough for most downloads on a reasonable connection.
 const TIMEOUT_MS = 60_000
 
-function run(args: string[]): Promise<SpawnResult> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(binaryPath('yt-dlp'), args, { stdio: ['ignore', 'pipe', 'pipe'] })
-    let stdout = ''
-    let stderr = ''
-    let settled = false
-
-    const timer = setTimeout(() => {
-      if (settled) return
-      settled = true
-      child.kill('SIGKILL')
-      reject(new Error(`yt-dlp timed out after ${TIMEOUT_MS / 1000}s`))
-    }, TIMEOUT_MS)
-
-    child.stdout.on('data', (chunk) => (stdout += chunk.toString()))
-    child.stderr.on('data', (chunk) => (stderr += chunk.toString()))
-    child.on('error', (err) => {
-      if (settled) return
-      settled = true
-      clearTimeout(timer)
-      reject(err)
-    })
-    child.on('close', (code) => {
-      if (settled) return
-      settled = true
-      clearTimeout(timer)
-      resolve({ stdout, stderr, code })
-    })
-  })
+function run(args: string[]): Promise<RunResult> {
+  return runBinary(binaryPath('yt-dlp'), args, { timeoutMs: TIMEOUT_MS, label: 'yt-dlp' })
 }
 
 export async function fetchYouTubeMeta(

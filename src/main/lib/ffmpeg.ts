@@ -1,15 +1,9 @@
-import { spawn } from 'node:child_process'
 import { binaryPath } from './binaries'
+import { runBinary } from './spawn'
 
-function run(args: string[]): Promise<{ stderr: string; code: number | null }> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(binaryPath('ffmpeg'), args, { stdio: ['ignore', 'ignore', 'pipe'] })
-    let stderr = ''
-    child.stderr.on('data', (chunk) => (stderr += chunk.toString()))
-    child.on('error', reject)
-    child.on('close', (code) => resolve({ stderr, code }))
-  })
-}
+// libmp3lame runs far faster than realtime; even very long sources finish
+// in well under five minutes, so anything past that is a hung child.
+const TIMEOUT_MS = 5 * 60_000
 
 export async function convertToMp3(
   inputPath: string,
@@ -27,7 +21,10 @@ export async function convertToMp3(
 
   args.push('-i', inputPath, '-vn', '-acodec', 'libmp3lame', '-q:a', '0', outputPath)
 
-  const result = await run(args)
+  const result = await runBinary(binaryPath('ffmpeg'), args, {
+    timeoutMs: TIMEOUT_MS,
+    label: 'ffmpeg'
+  })
   if (result.code !== 0) {
     throw new Error(result.stderr.trim().split('\n').pop() || 'ffmpeg failed')
   }
