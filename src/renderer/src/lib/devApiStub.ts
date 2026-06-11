@@ -8,7 +8,7 @@ import type { Api } from '@shared/types'
 export function installDevApiStub(): void {
   if (!import.meta.env.DEV || window.api) return
 
-  const delay = <T,>(value: T, ms = 400): Promise<T> =>
+  const delay = <T>(value: T, ms = 400): Promise<T> =>
     new Promise((resolve) => setTimeout(() => resolve(value), ms))
 
   const stub: Api = {
@@ -40,6 +40,7 @@ export function installDevApiStub(): void {
     setLastFolder: () => delay(undefined),
     getPathForFile: (file) => `/Users/dev/Downloads/${file.name}`,
     hasGeminiKey: () => delay(true, 50),
+    getGeminiKey: () => delay('AIzaSyStubKey-1234567890abcdef'),
     setGeminiKey: () => delay(undefined),
     isOnboarded: () => delay(true, 50),
     setOnboarded: () => delay(undefined),

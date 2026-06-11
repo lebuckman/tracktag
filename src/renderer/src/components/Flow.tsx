@@ -16,7 +16,7 @@ const EMPTY_METADATA: Metadata = {
 
 const EASE = [0.2, 0.7, 0.2, 1] as const
 
-export function Flow(): React.JSX.Element {
+export function Flow({ canAutofill }: { canAutofill: boolean }): React.JSX.Element {
   const [source, setSource] = useState<Source | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [trim, setTrim] = useState<TrimRange>(EMPTY_TRIM)
@@ -78,7 +78,12 @@ export function Flow(): React.JSX.Element {
               File name → Folder spacing reads as one continuous form. */}
           <div className="flex flex-col gap-7">
             <Reveal delay={0.18}>
-              <MetadataForm source={source} metadata={metadata} onChange={setMetadata} />
+              <MetadataForm
+                source={source}
+                metadata={metadata}
+                onChange={setMetadata}
+                canAutofill={canAutofill}
+              />
             </Reveal>
             <Reveal delay={0.28}>
               <SaveControls

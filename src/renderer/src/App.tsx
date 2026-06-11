@@ -29,7 +29,8 @@ function App(): React.JSX.Element {
     Promise.all([window.api.hasGeminiKey(), window.api.isOnboarded()]).then(
       ([keySet, onboarded]) => {
         setHasKey(keySet)
-        setView(keySet && onboarded ? 'flow' : 'onboarding')
+        // The key is optional — only the one-time setup screen gates entry.
+        setView(onboarded ? 'flow' : 'onboarding')
       }
     )
     // Manual-but-noticed updates: unsigned builds can't self-install, so a
@@ -45,8 +46,8 @@ function App(): React.JSX.Element {
     })
   }, [])
 
-  function finishOnboarding(): void {
-    setHasKey(true)
+  function finishOnboarding(keySet: boolean): void {
+    setHasKey(keySet)
     setView('flow')
   }
 
@@ -70,14 +71,14 @@ function App(): React.JSX.Element {
             {settingsOpen && (
               <Onboarding
                 hasKey={hasKey}
-                onDone={() => {
-                  setHasKey(true)
+                onDone={(keySet) => {
+                  setHasKey(keySet)
                   setSettingsOpen(false)
                 }}
               />
             )}
             <div className={settingsOpen ? 'hidden' : ''}>
-              <Flow />
+              <Flow canAutofill={hasKey} />
             </div>
           </>
         ) : null}

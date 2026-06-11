@@ -4,33 +4,63 @@ import { toast } from 'sonner'
 type Props = {
   /** Whether a key is already stored (settings re-entry vs first run). */
   hasKey: boolean
-  onDone: () => void
+  /** Reports whether a key exists after the screen closes. */
+  onDone: (keySet: boolean) => void
 }
 
 /**
- * First-run setup: paste a Gemini key, read two one-line caveats, done.
- * Reachable again later via the corner settings button, where it doubles
- * as the "replace key" screen. The key is write-only — it goes to the
- * main process store and is never read back into the renderer.
+ * First-run setup and the settings screen. The Gemini key is optional:
+ * it only powers Autofill, and the flow works fully by hand without one.
+ * In settings the stored key can be revealed (eye toggle) and replaced.
  */
 export function Onboarding({ hasKey, onDone }: Props): React.JSX.Element {
   const [draft, setDraft] = useState('')
+  const [revealed, setRevealed] = useState(false)
+  // The stored key, fetched lazily the first time it is revealed. Also
+  // distinguishes "typed a new key" from "looking at the saved one".
+  const [loadedKey, setLoadedKey] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+
+  const dirty = draft.trim().length > 0 && draft.trim() !== loadedKey
 
   function save(): void {
     const key = draft.trim()
-    if (!key && !hasKey) return
     toast.dismiss('onboarding')
     startTransition(async () => {
       try {
-        if (key) await window.api.setGeminiKey(key)
+        if (key && key !== loadedKey) await window.api.setGeminiKey(key)
         await window.api.setOnboarded()
-        onDone()
+        onDone(!!key || hasKey)
       } catch {
         toast.error('Could not save the key', { id: 'onboarding' })
       }
     })
   }
+
+  function toggleReveal(): void {
+    if (revealed) {
+      setRevealed(false)
+      return
+    }
+    if (loadedKey !== null) {
+      if (!draft) setDraft(loadedKey)
+      setRevealed(true)
+      return
+    }
+    window.api.getGeminiKey().then((key) => {
+      setLoadedKey(key)
+      if (!draft) setDraft(key)
+      setRevealed(true)
+    })
+  }
+
+  const buttonLabel = hasKey
+    ? dirty
+      ? 'Save'
+      : 'Back'
+    : draft.trim()
+      ? 'Start tagging'
+      : 'Skip for now'
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6">
@@ -51,7 +81,9 @@ export function Onboarding({ hasKey, onDone }: Props): React.JSX.Element {
             className="mt-3 text-base"
             style={{ color: 'var(--color-text-muted)', textWrap: 'pretty' }}
           >
-            Autofill is powered by Google Gemini. Paste an API key (free at{' '}
+            The Autofill button reads a video&apos;s title and description with Google Gemini and
+            formats clean tags using rules tailored for music (cover and version notation, event
+            album naming). It needs an API key, free at{' '}
             <a
               href="https://aistudio.google.com/apikey"
               target="_blank"
@@ -60,26 +92,42 @@ export function Onboarding({ hasKey, onDone }: Props): React.JSX.Element {
             >
               aistudio.google.com
             </a>
-            ). The key is stored on this Mac and only used to request tags.
+            , stored on this Mac and only used to request tags. Without one, everything still works:
+            you just fill the fields in yourself.
           </p>
 
           <div className="mt-7">
             <label className="tt-label mb-3 block" htmlFor="tt-gemini-key">
-              Gemini API key
+              Gemini API key · optional
             </label>
-            <input
-              id="tt-gemini-key"
-              className="tt-input tt-input--mono"
-              type="password"
-              placeholder={hasKey ? 'Key saved — paste to replace' : 'AIza…'}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') save()
-              }}
-              spellCheck={false}
-              autoComplete="off"
-            />
+            <div className="relative">
+              <input
+                id="tt-gemini-key"
+                className="tt-input tt-input--mono"
+                type={revealed ? 'text' : 'password'}
+                placeholder={hasKey ? 'Key saved' : 'AIza…'}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') save()
+                }}
+                spellCheck={false}
+                autoComplete="off"
+                style={hasKey ? { paddingRight: '3rem' } : undefined}
+              />
+              {hasKey && (
+                <button
+                  type="button"
+                  onClick={toggleReveal}
+                  aria-label={revealed ? 'Hide key' : 'Show key'}
+                  aria-pressed={revealed}
+                  className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md transition-colors"
+                  style={{ color: revealed ? 'var(--color-text)' : 'var(--color-text-dim)' }}
+                >
+                  <EyeIcon open={revealed} />
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="mt-7 flex flex-col gap-2.5">
@@ -98,14 +146,34 @@ export function Onboarding({ hasKey, onDone }: Props): React.JSX.Element {
             <button
               type="button"
               onClick={save}
-              disabled={pending || (!draft.trim() && !hasKey)}
+              disabled={pending}
               className="tt-btn tt-btn-primary"
             >
-              {hasKey ? (draft.trim() ? 'Save' : 'Back') : 'Start tagging'}
+              {buttonLabel}
             </button>
           </div>
         </div>
       </div>
     </div>
+  )
+}
+
+function EyeIcon({ open }: { open: boolean }): React.JSX.Element {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+      <circle cx="12" cy="12" r="3" />
+      {!open && <line x1="4" y1="20" x2="20" y2="4" />}
+    </svg>
   )
 }

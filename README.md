@@ -11,7 +11,7 @@ Desktop port of the original [TrackTag web app](https://github.com/lebuckman/min
 3. Optionally trim with the inline scissor control.
 4. Pick a folder, hit **Save MP3**.
 
-On first launch the app asks for a Gemini API key (free at [aistudio.google.com](https://aistudio.google.com/apikey)). The key is stored locally on your Mac and only ever used from the app's main process.
+On first launch the app offers to take a Gemini API key (free at [aistudio.google.com](https://aistudio.google.com/apikey)). The key is optional and only powers Autofill — skip it and the app works fully with hand-typed tags; add one later from the settings screen. It is stored locally on your Mac and only ever used from the app's main process.
 
 ## First launch on macOS
 

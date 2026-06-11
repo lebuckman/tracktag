@@ -9,6 +9,8 @@ type Props = {
   source: Source
   metadata: Metadata
   onChange: (metadata: Metadata) => void
+  /** Autofill needs a Gemini key; without one the button is hidden. */
+  canAutofill: boolean
 }
 
 type FieldKey = 'title' | 'artists' | 'album' | 'fileName'
@@ -23,7 +25,12 @@ function splitArtists(value: string): string[] {
     .filter(Boolean)
 }
 
-export function MetadataForm({ source, metadata, onChange }: Props): React.JSX.Element {
+export function MetadataForm({
+  source,
+  metadata,
+  onChange,
+  canAutofill
+}: Props): React.JSX.Element {
   const [pending, startTransition] = useTransition()
   const [fileNameDirty, setFileNameDirty] = useState(false)
   const [typing, setTyping] = useState<Set<FieldKey>>(new Set())
@@ -153,13 +160,20 @@ export function MetadataForm({ source, metadata, onChange }: Props): React.JSX.E
 
   return (
     <section className="anim-rise">
-      <div className="flex justify-center">
-        <button type="button" onClick={autofill} disabled={pending} className="tt-btn tt-btn-aura">
-          {pending ? 'Thinking…' : 'Autofill'}
-        </button>
-      </div>
+      {canAutofill && (
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={autofill}
+            disabled={pending}
+            className="tt-btn tt-btn-aura"
+          >
+            {pending ? 'Thinking…' : 'Autofill'}
+          </button>
+        </div>
+      )}
 
-      <div className="mt-8 flex flex-col gap-7">
+      <div className={`flex flex-col gap-7 ${canAutofill ? 'mt-8' : ''}`}>
         <div>
           <label className="tt-label mb-3 block" htmlFor="tt-title">
             Title

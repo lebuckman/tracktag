@@ -14,6 +14,7 @@ const api: Api = {
   setLastFolder: (folder) => ipcRenderer.invoke('setLastFolder', folder),
   getPathForFile: (file) => webUtils.getPathForFile(file),
   hasGeminiKey: () => ipcRenderer.invoke('hasGeminiKey'),
+  getGeminiKey: () => ipcRenderer.invoke('getGeminiKey'),
   setGeminiKey: (key) => ipcRenderer.invoke('setGeminiKey', key),
   isOnboarded: () => ipcRenderer.invoke('isOnboarded'),
   setOnboarded: () => ipcRenderer.invoke('setOnboarded'),

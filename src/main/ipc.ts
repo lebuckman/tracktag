@@ -247,6 +247,8 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('readLastFolder', () => getLastSaveFolder())
   ipcMain.handle('setLastFolder', (_e, folder: string) => setLastSaveFolder(folder))
   ipcMain.handle('hasGeminiKey', () => getGeminiKey().length > 0)
+  // Read-back exists solely for the settings "show key" toggle.
+  ipcMain.handle('getGeminiKey', () => getGeminiKey())
   ipcMain.handle('setGeminiKey', (_e, key: string) => setGeminiKey(key))
   ipcMain.handle('isOnboarded', () => isOnboarded())
   ipcMain.handle('setOnboarded', () => setOnboarded())

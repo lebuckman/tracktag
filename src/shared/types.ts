@@ -78,6 +78,7 @@ export type Api = {
   /** Resolve the on-disk path of a dropped/picked File (Electron webUtils). */
   getPathForFile: (file: File) => string
   hasGeminiKey: () => Promise<boolean>
+  getGeminiKey: () => Promise<string>
   setGeminiKey: (key: string) => Promise<void>
   isOnboarded: () => Promise<boolean>
   setOnboarded: () => Promise<void>
