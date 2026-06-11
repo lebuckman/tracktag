@@ -81,4 +81,8 @@ export type Api = {
   setGeminiKey: (key: string) => Promise<void>
   isOnboarded: () => Promise<boolean>
   setOnboarded: () => Promise<void>
+  /** Fired when a newer GitHub release of the app exists. */
+  onUpdateAvailable: (cb: (info: AppUpdateInfo) => void) => void
 }
+
+export type AppUpdateInfo = { version: string; url: string }

@@ -3,8 +3,9 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { registerIpcHandlers, cleanScratch } from './ipc'
+import { selfUpdateYtdlp, notifyIfAppUpdateAvailable } from './lib/updater'
 
-function createWindow(): void {
+function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
     width: 1080,
     height: 820,
@@ -39,6 +40,8 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  return mainWindow
 }
 
 app.whenReady().then(() => {
@@ -53,7 +56,9 @@ app.whenReady().then(() => {
   registerIpcHandlers()
   void cleanScratch()
 
-  createWindow()
+  const win = createWindow()
+  void selfUpdateYtdlp()
+  void notifyIfAppUpdateAvailable(win)
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the

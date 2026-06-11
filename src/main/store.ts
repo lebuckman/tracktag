@@ -4,6 +4,7 @@ type ConfigSchema = {
   lastSaveFolder?: string
   geminiApiKey?: string
   onboarded?: boolean
+  lastYtdlpCheck?: number
 }
 
 // The Gemini key lives only in this store, read only by the main process.
@@ -24,6 +25,14 @@ export function getGeminiKey(): string {
 
 export function setGeminiKey(key: string): void {
   store.set('geminiApiKey', key.trim())
+}
+
+export function getLastYtdlpCheck(): number {
+  return store.get('lastYtdlpCheck', 0)
+}
+
+export function setLastYtdlpCheck(ts: number): void {
+  store.set('lastYtdlpCheck', ts)
 }
 
 export function isOnboarded(): boolean {

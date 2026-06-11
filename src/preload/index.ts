@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
-import type { Api, PrefillInput, SavePayload } from '../shared/types'
+import type { Api, AppUpdateInfo, PrefillInput, SavePayload } from '../shared/types'
 
 // Mirrors the web app's server actions. Every method round-trips through
 // ipcMain.handle in src/main/ipc.ts and returns the same discriminated
@@ -16,7 +16,10 @@ const api: Api = {
   hasGeminiKey: () => ipcRenderer.invoke('hasGeminiKey'),
   setGeminiKey: (key) => ipcRenderer.invoke('setGeminiKey', key),
   isOnboarded: () => ipcRenderer.invoke('isOnboarded'),
-  setOnboarded: () => ipcRenderer.invoke('setOnboarded')
+  setOnboarded: () => ipcRenderer.invoke('setOnboarded'),
+  onUpdateAvailable: (cb) => {
+    ipcRenderer.on('update-available', (_e, info: AppUpdateInfo) => cb(info))
+  }
 }
 
 if (process.contextIsolated) {

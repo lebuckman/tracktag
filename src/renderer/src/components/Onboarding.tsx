@@ -84,9 +84,9 @@ export function Onboarding({ hasKey, onDone }: Props): React.JSX.Element {
 
           <div className="mt-7 flex flex-col gap-2.5">
             <p className="text-sm" style={{ color: 'var(--color-text-dim)', textWrap: 'pretty' }}>
-              Downloads run through a bundled copy of yt-dlp. YouTube changes its player code every
-              few weeks, which can break it. If downloads start failing, updating the app ships a
-              fresh yt-dlp and usually fixes it.
+              Downloads run through yt-dlp, which YouTube breaks every few weeks by changing its
+              player code. TrackTag fetches the latest yt-dlp on launch, so if downloads start
+              failing, quitting and reopening the app usually picks up the fix.
             </p>
             <p className="text-sm" style={{ color: 'var(--color-text-dim)', textWrap: 'pretty' }}>
               Videos that require a signed-in session (age-restricted, region-locked, or

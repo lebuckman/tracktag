@@ -26,9 +26,11 @@ One-time fix, pick whichever matches your macOS:
 
 That's it — one click per machine, permanent.
 
-## If downloads suddenly stop working
+## Updates
 
-YouTube periodically changes its player and breaks yt-dlp (the downloader TrackTag bundles). When that happens, update the app — each release ships the latest yt-dlp. Also note that some videos simply won't download: age-restricted, region-locked, and members-only content.
+- **yt-dlp keeps itself fresh.** YouTube periodically changes its player and breaks yt-dlp (the downloader TrackTag bundles). The app re-downloads the latest yt-dlp on launch (throttled to once every 6 hours), so a quit-and-reopen usually fixes sudden download failures.
+- **App updates are notified, not silent.** When a newer release exists on GitHub, the app shows a toast linking to it; installing is still download-and-drag. True in-place auto-update on macOS requires a code-signed app, which this isn't (see above).
+- Some videos simply won't download regardless: age-restricted, region-locked, and members-only content needs a signed-in session.
 
 ## Development
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Toaster } from 'sonner'
+import { toast, Toaster } from 'sonner'
 import { GradientDots } from './components/GradientDots'
 import { PixelCursorTrail } from './components/PixelCursorTrail'
 import { GithubLink } from './components/GithubLink'
@@ -25,6 +25,17 @@ function App(): React.JSX.Element {
         setView(keySet && onboarded ? 'flow' : 'onboarding')
       }
     )
+    // Manual-but-noticed updates: unsigned builds can't self-install, so a
+    // newer GitHub release surfaces as a persistent toast instead.
+    window.api.onUpdateAvailable((info) => {
+      toast(`TrackTag ${info.version} is available`, {
+        id: 'app-update',
+        action: {
+          label: 'Get it',
+          onClick: () => window.open(info.url, '_blank')
+        }
+      })
+    })
   }, [])
 
   function finishOnboarding(): void {
