@@ -325,7 +325,10 @@ export function SourceSelector({
       <motion.div
         layout
         transition={{ duration: 0.32, ease: [0.2, 0.7, 0.2, 1] }}
-        className={compact ? '' : 'mt-6'}
+        // popLayout positions the exiting tab pane with position:absolute
+        // against the nearest positioned ancestor — without relative here
+        // the ghost lands far from the swap and flashes across the screen.
+        className={`relative ${compact ? '' : 'mt-6'}`}
       >
         <AnimatePresence mode="popLayout" initial={false}>
           {mode === 'youtube' ? (

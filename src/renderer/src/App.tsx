@@ -7,6 +7,9 @@ import { SettingsButton } from './components/SettingsButton'
 import { KitchenSink } from './components/KitchenSink'
 import { Onboarding } from './components/Onboarding'
 import { Flow } from './components/Flow'
+import { installDevApiStub } from './lib/devApiStub'
+
+installDevApiStub()
 
 type View = 'loading' | 'onboarding' | 'flow'
 
