@@ -34,6 +34,12 @@ function App(): React.JSX.Element {
 
   return (
     <>
+      {/* Drag strip for the hiddenInset title bar. */}
+      <div
+        aria-hidden
+        className="fixed inset-x-0 top-0 z-40 h-9"
+        style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+      />
       <GradientDots />
       <PixelCursorTrail />
       <div className="relative">

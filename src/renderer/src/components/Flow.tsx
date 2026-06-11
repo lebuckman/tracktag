@@ -73,18 +73,22 @@ export function Flow(): React.JSX.Element {
             trim={trim}
             onTrimChange={setTrim}
           />
-          <Reveal delay={0.18}>
-            <MetadataForm source={source} metadata={metadata} onChange={setMetadata} />
-          </Reveal>
-          <Reveal delay={0.28}>
-            <SaveControls
-              source={source}
-              file={file}
-              trim={trim}
-              metadata={metadata}
-              onSaved={reset}
-            />
-          </Reveal>
+          {/* Grouped with the same gap as the metadata fields so the
+              File name → Folder spacing reads as one continuous form. */}
+          <div className="flex flex-col gap-7">
+            <Reveal delay={0.18}>
+              <MetadataForm source={source} metadata={metadata} onChange={setMetadata} />
+            </Reveal>
+            <Reveal delay={0.28}>
+              <SaveControls
+                source={source}
+                file={file}
+                trim={trim}
+                metadata={metadata}
+                onSaved={reset}
+              />
+            </Reveal>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

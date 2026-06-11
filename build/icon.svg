@@ -1,17 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- macOS app icon: dark squircle (input-surface elev-1) on the Apple
+       1024 grid (824px rect, 100px margin), vinyl glyph optically centered.
+       The artwork's visual bbox center in its 24-unit viewBox is (10.1, 11.4),
+       so the transform maps that point to (512, 512). -->
   <defs>
-    <!-- Single mask: cuts the label ring + the music-note halo out of the
-         record body. The spindle area stays solid (white in the mask), so
-         the tiny center dot is the record colour, exactly like the
-         reference PNG. -->
     <mask id="tt-cutouts">
-      <rect width="24" height="24" fill="white"/>
-      <!-- Label ring — cut away -->
+      <rect x="-4" y="-4" width="32" height="32" fill="white"/>
       <circle cx="9" cy="10" r="2.8" fill="black"/>
-      <!-- Spindle — keep (so it punches back through the label) -->
       <circle cx="9" cy="10" r="0.7" fill="white"/>
-      <!-- Note halo — thicker version of the note shape, so a clean gap
-           appears around the note where it overlaps the record. -->
       <g fill="black" stroke="black" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="11.5" y1="19" x2="11.5" y2="12"/>
         <line x1="18" y1="19.5" x2="18" y2="12.5"/>
@@ -22,15 +18,17 @@
     </mask>
   </defs>
 
-  <!-- Record body, single colour, with the mask carving the label + halo. -->
-  <circle cx="9" cy="10" r="8.5" fill="#d4b48c" mask="url(#tt-cutouts)"/>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="#12121a"/>
+  <rect x="102" y="102" width="820" height="820" rx="183" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="4"/>
 
-  <!-- Music note drawn on top, sized to sit inside the cutout halo. -->
-  <g fill="#d4b48c" stroke="#d4b48c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="11.5" y1="19" x2="11.5" y2="12"/>
-    <line x1="18" y1="19.5" x2="18" y2="12.5"/>
-    <line x1="11.5" y1="12" x2="18" y2="12.5"/>
-    <ellipse cx="11" cy="19.5" rx="1.7" ry="1.25" stroke="none"/>
-    <ellipse cx="17.5" cy="20" rx="1.7" ry="1.25" stroke="none"/>
+  <g transform="translate(279.7, 249.8) scale(23)">
+    <circle cx="9" cy="10" r="8.5" fill="#d4b48c" mask="url(#tt-cutouts)"/>
+    <g fill="#d4b48c" stroke="#d4b48c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="11.5" y1="19" x2="11.5" y2="12"/>
+      <line x1="18" y1="19.5" x2="18" y2="12.5"/>
+      <line x1="11.5" y1="12" x2="18" y2="12.5"/>
+      <ellipse cx="11" cy="19.5" rx="1.7" ry="1.25" stroke="none"/>
+      <ellipse cx="17.5" cy="20" rx="1.7" ry="1.25" stroke="none"/>
+    </g>
   </g>
 </svg>

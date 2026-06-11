@@ -44,7 +44,30 @@
 
 html {
   background-color: var(--color-bg);
-  scrollbar-gutter: stable;
+}
+
+/* Transparent scrollbar so the ambient layer runs edge to edge. The web
+   version reserved a gutter (scrollbar-gutter: stable); in Electron the
+   bar overlays the page instead, with a subtle thumb in the border tones. */
+::-webkit-scrollbar {
+  width: 12px;
+  background: transparent;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+  background-clip: padding-box;
 }
 
 body {

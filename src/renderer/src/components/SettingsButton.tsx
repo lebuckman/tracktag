@@ -1,6 +1,6 @@
 /**
  * Corner affordance for re-opening the setup screen (key replacement).
- * Sits beside the GitHub link, bottom-left, sharing its visual language.
+ * Stacked above the GitHub link, bottom-left, sharing its visual language.
  */
 export function SettingsButton({ onClick }: { onClick: () => void }): React.JSX.Element {
   return (
@@ -8,7 +8,7 @@ export function SettingsButton({ onClick }: { onClick: () => void }): React.JSX.
       type="button"
       onClick={onClick}
       aria-label="Open settings"
-      className="tt-github-link fixed bottom-5 left-18 z-30 flex h-10 w-10 items-center justify-center rounded-full"
+      className="tt-github-link fixed bottom-17 left-5 z-30 flex h-10 w-10 items-center justify-center rounded-full"
     >
       <svg
         viewBox="0 0 24 24"

@@ -13,6 +13,9 @@ function createWindow(): void {
     show: false,
     autoHideMenuBar: true,
     backgroundColor: '#08080b',
+    // Traffic lights float over the ambient background; the renderer
+    // provides a drag strip along the top edge.
+    titleBarStyle: 'hiddenInset',
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),

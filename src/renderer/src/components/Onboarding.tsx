@@ -47,8 +47,11 @@ export function Onboarding({ hasKey, onDone }: Props): React.JSX.Element {
           >
             {hasKey ? 'Settings' : 'Welcome to TrackTag'}
           </h1>
-          <p className="mt-3 text-base" style={{ color: 'var(--color-text-muted)' }}>
-            Autofill is powered by Google Gemini. Paste an API key — free at{' '}
+          <p
+            className="mt-3 text-base"
+            style={{ color: 'var(--color-text-muted)', textWrap: 'pretty' }}
+          >
+            Autofill is powered by Google Gemini. Paste an API key (free at{' '}
             <a
               href="https://aistudio.google.com/apikey"
               target="_blank"
@@ -57,7 +60,7 @@ export function Onboarding({ hasKey, onDone }: Props): React.JSX.Element {
             >
               aistudio.google.com
             </a>
-            . It is stored on this Mac only.
+            ). The key is stored on this Mac and only used to request tags.
           </p>
 
           <div className="mt-7">
@@ -80,11 +83,14 @@ export function Onboarding({ hasKey, onDone }: Props): React.JSX.Element {
           </div>
 
           <div className="mt-7 flex flex-col gap-2.5">
-            <p className="text-sm" style={{ color: 'var(--color-text-dim)' }}>
-              YouTube changes things now and then — if downloads suddenly fail, update the app.
+            <p className="text-sm" style={{ color: 'var(--color-text-dim)', textWrap: 'pretty' }}>
+              Downloads run through a bundled copy of yt-dlp. YouTube changes its player code every
+              few weeks, which can break it. If downloads start failing, updating the app ships a
+              fresh yt-dlp and usually fixes it.
             </p>
-            <p className="text-sm" style={{ color: 'var(--color-text-dim)' }}>
-              Age-restricted, region-locked, and member-only videos won&apos;t download.
+            <p className="text-sm" style={{ color: 'var(--color-text-dim)', textWrap: 'pretty' }}>
+              Videos that require a signed-in session (age-restricted, region-locked, or
+              members-only) cannot be downloaded.
             </p>
           </div>
 
@@ -95,7 +101,7 @@ export function Onboarding({ hasKey, onDone }: Props): React.JSX.Element {
               disabled={pending || (!draft.trim() && !hasKey)}
               className="tt-btn tt-btn-primary"
             >
-              {hasKey ? 'Done' : 'Start tagging'}
+              {hasKey ? (draft.trim() ? 'Save' : 'Back') : 'Start tagging'}
             </button>
           </div>
         </div>
