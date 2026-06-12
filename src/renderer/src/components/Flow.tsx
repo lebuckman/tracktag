@@ -59,7 +59,7 @@ export function Flow({ canAutofill }: { canAutofill: boolean }): React.JSX.Eleme
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: EASE, delay: 0.05 }}
-          className="mx-auto flex max-w-3xl flex-col gap-14 px-8 pt-20 pb-40"
+          className="mx-auto flex max-w-3xl flex-col gap-14 px-8 pt-20 pb-12"
         >
           <SourceSelector
             source={source}
