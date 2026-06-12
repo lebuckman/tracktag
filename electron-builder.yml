@@ -16,10 +16,12 @@ files:
 extraResources:
   - from: resources/bin
     to: bin
-# v1 ships unsigned — friends right-click → Open past Gatekeeper once.
-# Switch to a real identity + notarization if this outgrows that.
+# Ad-hoc signed (identity '-'): no Apple Developer cert, but the bundle is
+# properly sealed. Skipping signing entirely (identity: null) makes
+# quarantined downloads fail with "damaged and can't be opened" on Apple
+# Silicon instead of the recoverable Open Anyway prompt.
 mac:
-  identity: null
+  identity: '-'
   notarize: false
   target:
     - dmg

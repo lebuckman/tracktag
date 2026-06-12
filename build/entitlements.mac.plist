@@ -8,5 +8,9 @@
     <true/>
     <key>com.apple.security.cs.allow-dyld-environment-variables</key>
     <true/>
+    <!-- Required for ad-hoc signing: library validation rejects frameworks
+         whose ad-hoc signature carries no matching team id. -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
   </dict>
 </plist>
