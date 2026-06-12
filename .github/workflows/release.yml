@@ -26,7 +26,9 @@ jobs:
       # postinstall stages ffmpeg and downloads the latest yt-dlp
       - run: npm ci
 
-      - run: npm run dist
+      # --publish never: on tag builds in CI, electron-builder otherwise
+      # tries to publish the release itself; the gh step below owns that.
+      - run: npm run dist -- --publish never
 
       - name: Create draft release with the DMG
         env:
