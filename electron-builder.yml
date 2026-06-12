@@ -24,6 +24,8 @@ mac:
   target:
     - dmg
   category: public.app-category.music
+# Stable artifact name so the README's releases/latest/download link
+# always resolves; the version lives in the release tag.
 dmg:
-  artifactName: ${name}-${version}.${ext}
+  artifactName: ${productName}.${ext}
 npmRebuild: false

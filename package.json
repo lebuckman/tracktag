@@ -1,6 +1,6 @@
 {
   "name": "tracktag",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Download, trim, tag. Desktop edition.",
   "main": "./out/main/index.js",
   "author": "Liam Buckman",
