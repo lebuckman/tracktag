@@ -44,7 +44,7 @@ The renderer is sandboxed and everything system-side (downloads, ffmpeg, tagging
 
 ## Conventions
 
-- Conventional commits, `tracktag` scope: `feat(tracktag): …`, `fix(tracktag): …`. Brief subjects; body only when something non-obvious needs explaining.
+- Conventional commits with a meaningful scope when one helps: `feat(trim): …`, `fix(build): …`, or no scope for broad changes. Brief subjects; body only when something non-obvious needs explaining.
 - Linear history on `main`. Work on a branch, then merge without a merge commit (rebase or fast-forward).
 - Run `npm run typecheck && npm run lint` before pushing.
 - Some patterns look odd on purpose (persistent toasts with stable IDs, the autofill typewriter's ref dance, trim always going through ffmpeg). If something seems cleanable, check the comment next to it first.
