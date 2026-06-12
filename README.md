@@ -1,49 +1,64 @@
-# TrackTag
+<p align="center">
+  <img src="build/icon.png" width="128" alt="TrackTag icon" />
+</p>
 
-Download, trim, tag. A macOS desktop app that takes a YouTube URL (or a local audio/video file), optionally trims it, tags the metadata with AI, and saves a clean MP3 to a folder of your choice.
+<h1 align="center">TrackTag</h1>
 
-Desktop port of the original [TrackTag web app](https://github.com/lebuckman/mini-projects/tree/main/tracktag), built with Electron + electron-vite + React.
+<p align="center">
+  Download, trim, tag. A macOS app that turns YouTube videos and local files<br />
+  into cleanly tagged MP3s, with AI doing the boring part.
+</p>
 
-## How it works
+<p align="center">
+  <a href="https://github.com/lebuckman/tracktag/releases/latest"><img src="https://img.shields.io/github/v/release/lebuckman/tracktag?color=d4b48c&label=release" alt="Latest release" /></a>
+  <img src="https://img.shields.io/badge/platform-macOS%20(Apple%20Silicon)-12121a" alt="Platform" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-12121a" alt="License" /></a>
+</p>
 
-1. Paste a YouTube link or drop a file.
-2. Hit **Autofill** — Gemini reads the video title/description and fills in a properly formatted Title / Artist / Album (cover notation, version notation, event albums, the works). Edit anything it gets wrong.
-3. Optionally trim with the inline scissor control.
-4. Pick a folder, hit **Save MP3**.
+<p align="center">
+  <img src="docs/demo.gif" width="720" alt="TrackTag walkthrough" />
+</p>
 
-On first launch the app offers to take a Gemini API key (free at [aistudio.google.com](https://aistudio.google.com/apikey)). The key is optional and only powers Autofill — skip it and the app works fully with hand-typed tags; add one later from the settings screen. It is stored locally on your Mac and only ever used from the app's main process.
+## Download
 
-## First launch on macOS
+**[⬇ Download TrackTag for macOS](https://github.com/lebuckman/tracktag/releases/latest/download/TrackTag.dmg)**
 
-The app is unsigned (no Apple Developer subscription), so Gatekeeper will balk the first time:
+Open the DMG, drag TrackTag into Applications, done. Requires an Apple Silicon Mac.
 
-> "TrackTag" can't be opened because Apple cannot check it for malicious software.
+> [!IMPORTANT]
+> TrackTag is unsigned (no Apple Developer subscription), so macOS will balk on first open:
+> _"TrackTag can't be opened because Apple cannot check it for malicious software."_
+>
+> The fix: try to open the app once, then go to **System Settings → Privacy & Security**, scroll down to the blocked-app message, and click **Open Anyway**. On older macOS versions, right-click the app and choose **Open** instead.
+>
+> Because each download is a new unsigned file, this repeats once per update. It is the price of free distribution.
 
-One-time fix, pick whichever matches your macOS:
+## What it does
 
-- **Newer macOS:** open **System Settings → Privacy & Security**, scroll to the blocked-app message, click **Open Anyway**.
-- **Older macOS:** right-click TrackTag.app → **Open** → confirm in the dialog.
+TrackTag is for the music that never makes it to streaming: live performances, covers from music shows, concert recordings. It turns them into cleanly tagged MP3s that look right in Spotify Local Files, Apple Music, or any other player.
 
-That's it — one click per machine, permanent.
+1. **Paste a YouTube link**, or drop in a local audio or video file.
+2. **Hit Autofill.** Gemini reads the video's title and description and fills in Title, Artist, and Album using rules tuned for music: cover and version notation, event and OST album naming. Edit anything it gets wrong, or skip it and type the tags yourself.
+3. **Trim if you want.** An inline control cuts intros and outros, or pulls one song out of a full set.
+4. **Save.** Pick a folder once and TrackTag remembers it. Out comes a clean MP3 with tags and album art baked in.
 
-## Updates
+## The Gemini key (optional)
 
-- **yt-dlp keeps itself fresh.** YouTube periodically changes its player and breaks yt-dlp (the downloader TrackTag bundles). The app re-downloads the latest yt-dlp on launch (throttled to once every 6 hours), so a quit-and-reopen usually fixes sudden download failures.
-- **App updates are notified, not silent.** When a newer release exists on GitHub, the app shows a toast linking to it; installing is still download-and-drag. True in-place auto-update on macOS requires a code-signed app, which this isn't (see above).
-- Some videos simply won't download regardless: age-restricted, region-locked, and members-only content needs a signed-in session.
+Autofill is powered by Google Gemini and needs an API key, free at [aistudio.google.com](https://aistudio.google.com/apikey). The app asks once on first launch; paste it or skip. Without a key everything works, you just fill the fields in yourself. The key is stored only on your Mac and is only ever used to request tags.
 
-## Development
+## Good to know
 
-```bash
-npm install        # also stages ffmpeg + downloads latest yt-dlp into resources/bin
-npm run dev        # dev app with HMR
-npm run typecheck
-npm run lint
-npm run dist       # unsigned DMG in dist/
-```
+- **If downloads suddenly fail, quit and reopen the app.** Downloads run through yt-dlp, which YouTube breaks every few weeks by changing its player code. TrackTag fetches the latest yt-dlp on launch, so a relaunch usually picks up the fix without an app update.
+- **If YouTube complains about automation, wait a minute.** Several downloads in quick succession can make YouTube temporarily flag the connection. It clears on its own.
+- **App updates are noticed for you.** When a newer release exists, the app shows a small notice linking to the download. Installing is drag-and-drop again, including the Open Anyway step above.
+- **Some videos won't download.** Age-restricted, region-locked, and members-only videos need a signed-in session, which TrackTag doesn't have.
+- **Autofill needs an internet connection and a per-minute budget.** The free Gemini tier rate-limits aggressively; if Autofill reports a rate limit, wait a minute and retry.
+- **This is a personal tool.** It exists to tag your own library, not to run a download service. If you fork it, keep it personal.
 
-Open the dev app with `#sink` in the URL hash for a kitchen-sink gallery of every UI primitive.
+## Contributing
 
-## A note on scope
+Bug reports and ideas are welcome in [issues](https://github.com/lebuckman/tracktag/issues). If you want to build from source or open a PR, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-This is a personal tool for tagging your own library — it is not, and should not become, a public download service. If you fork it, keep it personal.
+## License
+
+[MIT](LICENSE). TrackTag bundles [yt-dlp](https://github.com/yt-dlp/yt-dlp) (Unlicense) and [ffmpeg](https://ffmpeg.org) (GPL build via ffmpeg-static); their licenses apply to those binaries.
