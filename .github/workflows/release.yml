@@ -1,0 +1,38 @@
+# Builds the DMG on a macOS runner whenever a v* tag is pushed and
+# attaches it to a draft release. Publish the draft by hand: the in-app
+# update notifier and the README download link only see published
+# releases, so publishing stays the deliberate final step.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # postinstall stages ffmpeg and downloads the latest yt-dlp
+      - run: npm ci
+
+      - run: npm run dist
+
+      - name: Create draft release with the DMG
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/TrackTag.dmg \
+            --title "$GITHUB_REF_NAME" \
+            --draft \
+            --generate-notes
