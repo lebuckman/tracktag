@@ -57,8 +57,10 @@ Autofill is powered by Google Gemini and needs an API key, free at [aistudio.goo
 
 ## Contributing
 
-Bug reports and ideas are welcome in [issues](https://github.com/lebuckman/tracktag/issues). If you want to build from source or open a PR, see [CONTRIBUTING.md](CONTRIBUTING.md).
+Before contributing code, please read the guidelines in [CONTRIBUTING.md](CONTRIBUTING.md), which also covers building from source.
 
 ## License
 
-[MIT](LICENSE). TrackTag bundles [yt-dlp](https://github.com/yt-dlp/yt-dlp) (Unlicense) and [ffmpeg](https://ffmpeg.org) (GPL build via ffmpeg-static); their licenses apply to those binaries.
+All code and content unique to TrackTag is licensed under MIT. See [LICENSE](LICENSE).
+
+The binaries TrackTag bundles retain their original licenses: [yt-dlp](https://github.com/yt-dlp/yt-dlp) is released under the Unlicense, and [ffmpeg](https://ffmpeg.org) (a GPL build, via ffmpeg-static) under GPL-3.0.
