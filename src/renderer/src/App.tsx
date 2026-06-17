@@ -4,9 +4,13 @@ import { GradientDots } from './components/GradientDots'
 import { PixelCursorTrail } from './components/PixelCursorTrail'
 import { GithubLink } from './components/GithubLink'
 import { SettingsButton } from './components/SettingsButton'
+import { HistoryButton } from './components/HistoryButton'
+import { HomeButton } from './components/HomeButton'
+import { History } from './components/History'
 import { Onboarding } from './components/Onboarding'
 import { Flow } from './components/Flow'
 import { installDevApiStub } from './lib/devApiStub'
+import type { HistoryEntry } from '@shared/types'
 
 installDevApiStub()
 
@@ -24,8 +28,19 @@ function App(): React.JSX.Element {
   const [hasKey, setHasKey] = useState(false)
   // Settings reuses the onboarding screen but renders OVER the flow while
   // the flow stays mounted (display:none) — closing it must not lose an
-  // in-progress source/metadata edit.
+  // in-progress source/metadata edit. History overlays the same way.
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  // A history selection to re-fill the form with. The key forces Flow's
+  // effect to re-run even when the same entry is picked twice.
+  const [prefill, setPrefill] = useState<HistoryEntry | null>(null)
+  const [prefillKey, setPrefillKey] = useState(0)
+
+  function applyHistory(entry: HistoryEntry): void {
+    setPrefill(entry)
+    setPrefillKey((k) => k + 1)
+    setHistoryOpen(false)
+  }
 
   useEffect(() => {
     // window.api only exists inside Electron — a plain browser tab pointed
@@ -78,21 +93,37 @@ function App(): React.JSX.Element {
             {settingsOpen && (
               <Onboarding
                 hasKey={hasKey}
+                isSettings
                 onDone={(keySet) => {
                   setHasKey(keySet)
                   setSettingsOpen(false)
                 }}
               />
             )}
-            <div className={settingsOpen ? 'hidden' : ''}>
-              <Flow canAutofill={hasKey} />
+            {historyOpen && <History onSelect={applyHistory} />}
+            <div className={settingsOpen || historyOpen ? 'hidden' : ''}>
+              {/* Keyed so a history selection remounts Flow with the entry
+                  applied via state initializers. */}
+              <Flow key={prefillKey} canAutofill={hasKey} prefill={prefill} />
             </div>
           </>
         ) : null}
       </div>
       <GithubLink />
       {view === 'flow' && !sink && !settingsOpen && (
-        <SettingsButton onClick={() => setSettingsOpen(true)} />
+        <>
+          <SettingsButton
+            onClick={() => {
+              setHistoryOpen(false)
+              setSettingsOpen(true)
+            }}
+          />
+          {historyOpen ? (
+            <HomeButton onClick={() => setHistoryOpen(false)} />
+          ) : (
+            <HistoryButton onClick={() => setHistoryOpen(true)} />
+          )}
+        </>
       )}
       <Toaster
         theme="dark"

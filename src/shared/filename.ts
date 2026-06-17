@@ -80,6 +80,14 @@ export function suggestFileName(title: string, artists: string[]): string {
   return artistSlug ? `${artistSlug}_${body}.mp3` : `${body}.mp3`
 }
 
+/** Split an artist string on `;` or `,` into trimmed, non-empty names. */
+export function splitArtists(value: string): string[] {
+  return value
+    .split(/[;,]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
+
 export function sanitizeFileName(value: string): string {
   const base = value.replace(/\.mp3$/i, '')
   const cleaned = slugify(base)

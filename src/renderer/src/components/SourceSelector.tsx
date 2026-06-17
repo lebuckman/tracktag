@@ -1,8 +1,9 @@
-import { useRef, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { SimpleTrim } from './SimpleTrim'
-import type { FileSource, Source, TrimRange } from '@shared/types'
+import { EASE } from '../lib/motion'
+import type { AudioOpts, FileSource, Source, TrimRange } from '@shared/types'
 
 type Mode = 'youtube' | 'file'
 
@@ -34,6 +35,9 @@ type Props = {
   /** Trim state — rendered inline inside the source card when expanded. */
   trim?: TrimRange
   onTrimChange?: (trim: TrimRange) => void
+  /** Optional audio processing — toggles live beside the trim slider. */
+  audio?: AudioOpts
+  onAudioChange?: (audio: AudioOpts) => void
 }
 
 export function SourceSelector({
@@ -41,7 +45,9 @@ export function SourceSelector({
   onSource,
   compact = false,
   trim,
-  onTrimChange
+  onTrimChange,
+  audio,
+  onAudioChange
 }: Props): React.JSX.Element {
   const [mode, setMode] = useState<Mode>('youtube')
   const [url, setUrl] = useState('')
@@ -51,6 +57,18 @@ export function SourceSelector({
   const [trimOpen, setTrimOpen] = useState(false)
   const [pending, startTransition] = useTransition()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const urlInputRef = useRef<HTMLInputElement>(null)
+  // Separate input for re-attaching a file on the source card (e.g. after a
+  // history re-fill, where the source is known but the File is not).
+  const replaceInputRef = useRef<HTMLInputElement>(null)
+
+  // Focus the URL field when the picker first appears — on initial load and
+  // after "Tag another" (which remounts this compact picker).
+  useEffect(() => {
+    if (compact && mode === 'youtube') urlInputRef.current?.focus()
+    // mount-only
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   // Incremented every time a new source is initiated or the source is
   // cleared. Async probes (duration fetch, audio metadata) capture this
   // value and bail if it no longer matches — otherwise a late callback
@@ -74,16 +92,10 @@ export function SourceSelector({
       }
       toast.dismiss('source-url')
       setUrlInvalid(false)
-      const initialSource = result.source
-      onSource(initialSource, null)
-
-      // Lazy-fetch duration for the trim slider.
-      window.api.fetchVideoDuration(initialSource.url).then((duration) => {
-        if (token !== probeTokenRef.current) return
-        if (duration != null) {
-          onSource({ ...initialSource, duration }, null)
-        }
-      })
+      // Duration enrichment for the trim slider happens in Flow, which owns
+      // the source across the picker→card swap; doing it here would let a
+      // late callback resurrect a cleared source.
+      onSource(result.source, null)
     })
   }
 
@@ -93,28 +105,14 @@ export function SourceSelector({
       return
     }
     toast.dismiss('source-file')
-    const token = ++probeTokenRef.current
+    // Duration is probed in Flow (the stable source owner), not here — see
+    // submitUrl above for why.
     const fileSource: FileSource = {
       kind: 'file',
       filename: picked.name,
       size: picked.size
     }
     onSource(fileSource, picked)
-
-    // Read duration via a hidden media element.
-    const objectUrl = URL.createObjectURL(picked)
-    const probe = document.createElement('audio')
-    probe.preload = 'metadata'
-    probe.src = objectUrl
-    probe.onloadedmetadata = (): void => {
-      const dur = Math.floor(probe.duration)
-      URL.revokeObjectURL(objectUrl)
-      if (token !== probeTokenRef.current) return
-      if (Number.isFinite(dur) && dur > 0) {
-        onSource({ ...fileSource, duration: dur }, picked)
-      }
-    }
-    probe.onerror = (): void => URL.revokeObjectURL(objectUrl)
   }
 
   function clear(): void {
@@ -204,17 +202,37 @@ export function SourceSelector({
                 </a>
               </div>
             ) : (
-              <p
-                className="text-xl leading-snug"
-                style={{
-                  color: 'var(--color-text)',
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 500,
-                  letterSpacing: '-0.015em'
-                }}
-              >
-                {source.filename}
-              </p>
+              <div className="flex items-center justify-between gap-3">
+                <p
+                  className="min-w-0 truncate text-xl leading-snug"
+                  style={{
+                    color: 'var(--color-text)',
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 500,
+                    letterSpacing: '-0.015em'
+                  }}
+                >
+                  {source.filename}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => replaceInputRef.current?.click()}
+                  className="tt-action shrink-0"
+                >
+                  Replace file
+                </button>
+                <input
+                  ref={replaceInputRef}
+                  type="file"
+                  accept={ACCEPT}
+                  className="sr-only"
+                  onChange={(e) => {
+                    const picked = e.target.files?.[0]
+                    if (picked) acceptFile(picked)
+                    e.target.value = ''
+                  }}
+                />
+              </div>
             )}
             <div className="mt-3 flex items-center justify-between gap-3">
               <p className="tt-meta">
@@ -222,14 +240,16 @@ export function SourceSelector({
                   ? source.channel
                     ? `YouTube · ${source.channel}`
                     : `YouTube · ${source.videoId}`
-                  : `Local · ${(source.size / (1024 * 1024)).toFixed(1)} MB`}
+                  : source.size > 0
+                    ? `Local · ${(source.size / (1024 * 1024)).toFixed(1)} MB`
+                    : 'Local file'}
               </p>
               {trim && onTrimChange && (
                 <button
                   type="button"
                   onClick={() => setTrimOpen((o) => !o)}
                   aria-expanded={trimOpen}
-                  aria-label={trimOpen ? 'Hide trim' : 'Show trim'}
+                  aria-label={trimOpen ? 'Hide audio options' : 'Show audio options'}
                   className="group relative inline-flex h-9 w-9 items-center justify-center rounded-md border transition-colors"
                   style={{
                     borderColor: trimOpen ? 'var(--color-border-strong)' : 'var(--color-border)',
@@ -237,7 +257,7 @@ export function SourceSelector({
                     color: 'var(--color-text-muted)'
                   }}
                 >
-                  <ScissorsIcon />
+                  <SlidersIcon />
                   {hasTrim && (
                     <span
                       aria-hidden
@@ -260,7 +280,7 @@ export function SourceSelector({
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{
-                    height: { duration: 0.34, ease: [0.2, 0.7, 0.2, 1] },
+                    height: { duration: 0.34, ease: EASE },
                     opacity: { duration: 0.22, ease: 'linear' }
                   }}
                   style={{ overflow: 'hidden' }}
@@ -274,6 +294,20 @@ export function SourceSelector({
                       trim={trim}
                       onChange={onTrimChange}
                     />
+                    {audio && onAudioChange && (
+                      <div className="mt-5 flex flex-wrap justify-center gap-2.5">
+                        <AudioToggle
+                          label="Fade in/out"
+                          active={audio.fade}
+                          onClick={() => onAudioChange({ ...audio, fade: !audio.fade })}
+                        />
+                        <AudioToggle
+                          label="Normalize"
+                          active={audio.normalize}
+                          onClick={() => onAudioChange({ ...audio, normalize: !audio.normalize })}
+                        />
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -324,7 +358,7 @@ export function SourceSelector({
 
       <motion.div
         layout
-        transition={{ duration: 0.32, ease: [0.2, 0.7, 0.2, 1] }}
+        transition={{ duration: 0.32, ease: EASE }}
         // popLayout positions the exiting tab pane with position:absolute
         // against the nearest positioned ancestor — without relative here
         // the ghost lands far from the swap and flashes across the screen.
@@ -338,9 +372,10 @@ export function SourceSelector({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.18, ease: [0.2, 0.7, 0.2, 1] }}
+              transition={{ duration: 0.18, ease: EASE }}
             >
               <input
+                ref={urlInputRef}
                 className={`tt-input ${
                   pending ? 'tt-glow-loading' : urlInvalid ? 'tt-glow-error' : ''
                 }`}
@@ -375,7 +410,7 @@ export function SourceSelector({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.18, ease: [0.2, 0.7, 0.2, 1] }}
+              transition={{ duration: 0.18, ease: EASE }}
             >
               <label
                 htmlFor="tt-file"
@@ -432,7 +467,54 @@ export function SourceSelector({
   )
 }
 
-function ScissorsIcon(): React.JSX.Element {
+function AudioToggle({
+  label,
+  active,
+  onClick
+}: {
+  label: string
+  active: boolean
+  onClick: () => void
+}): React.JSX.Element {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={active}
+      onClick={onClick}
+      className="inline-flex items-center gap-2.5 rounded-lg border px-3 py-2 transition-colors"
+      style={{
+        borderColor: active ? 'var(--color-accent-glow)' : 'var(--color-border)',
+        background: active ? 'var(--color-accent-soft)' : 'var(--color-elev-2)'
+      }}
+    >
+      <span
+        aria-hidden
+        className="relative h-3.5 w-6 rounded-full transition-colors"
+        style={{ background: active ? 'var(--color-accent)' : 'var(--color-border-strong)' }}
+      >
+        <span
+          className="absolute top-0.5 h-2.5 w-2.5 rounded-full transition-all"
+          style={{
+            left: active ? 'calc(100% - 0.625rem - 0.125rem)' : '0.125rem',
+            background: active ? 'var(--color-bg)' : 'var(--color-text-dim)'
+          }}
+        />
+      </span>
+      <span
+        className="text-[0.7rem] uppercase tracking-[0.12em]"
+        style={{
+          fontFamily: 'var(--font-mono)',
+          color: active ? 'var(--color-text)' : 'var(--color-text-muted)'
+        }}
+      >
+        {label}
+      </span>
+    </button>
+  )
+}
+
+function SlidersIcon(): React.JSX.Element {
   return (
     <svg
       width="16"
@@ -446,11 +528,10 @@ function ScissorsIcon(): React.JSX.Element {
       className="transition-colors group-hover:text-(--color-text)"
       aria-hidden
     >
-      <circle cx="6" cy="6" r="3" />
-      <circle cx="6" cy="18" r="3" />
-      <line x1="20" y1="4" x2="8.12" y2="15.88" />
-      <line x1="14.47" y1="14.48" x2="20" y2="20" />
-      <line x1="8.12" y1="8.12" x2="12" y2="12" />
+      <line x1="4" y1="8" x2="20" y2="8" />
+      <line x1="4" y1="16" x2="20" y2="16" />
+      <circle cx="9" cy="8" r="2.4" />
+      <circle cx="15" cy="16" r="2.4" />
     </svg>
   )
 }

@@ -89,12 +89,8 @@ export function SimpleTrim({ duration, trim, onChange }: Props): React.JSX.Eleme
         />
         {!disabled && (
           <>
-            <Handle
-              position={startPct}
-              side="start"
-              onPointerDown={() => (dragging.current = 'start')}
-            />
-            <Handle position={endPct} side="end" onPointerDown={() => (dragging.current = 'end')} />
+            <Handle position={startPct} onPointerDown={() => (dragging.current = 'start')} />
+            <Handle position={endPct} onPointerDown={() => (dragging.current = 'end')} />
           </>
         )}
       </div>
@@ -110,21 +106,17 @@ export function SimpleTrim({ duration, trim, onChange }: Props): React.JSX.Eleme
 
 function Handle({
   position,
-  side,
   onPointerDown
 }: {
   position: number
-  side: 'start' | 'end'
   onPointerDown: () => void
 }): React.JSX.Element {
   return (
     <div
-      role="slider"
-      tabIndex={0}
-      aria-label={`Trim ${side}`}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={Math.round(position)}
+      // Decorative drag affordance — the timecode inputs are the keyboard- and
+      // screen-reader-accessible control, so the handle stays out of the tab
+      // order and the a11y tree.
+      aria-hidden
       onPointerDown={(e) => {
         e.preventDefault()
         onPointerDown()
