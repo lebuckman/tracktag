@@ -187,7 +187,7 @@ function HistoryRow({
   selected: boolean
   onActivate: () => void
 }): React.JSX.Element {
-  const subtitle = [entry.artist, entry.album].filter(Boolean).join(' · ')
+  const subtitle = [entry.artist, entry.album].filter(Boolean).join(' | ')
   const canOpenLink = !selectMode && entry.kind === 'youtube' && !!entry.sourceUrl
 
   return (
