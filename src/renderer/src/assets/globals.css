@@ -446,6 +446,23 @@ body {
   color: var(--color-text);
 }
 
+/* The saved-file path doubles as a "reveal in Finder" button. */
+.tt-reveal-path {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 0.2rem 0.35rem;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease;
+}
+
+.tt-reveal-path:hover {
+  color: var(--color-accent) !important;
+  background: var(--color-accent-soft);
+}
+
 /* Segmented toggle tab — used by the YouTube/File switcher. Active state
    is driven by aria-selected so React only flips the attribute. */
 .tt-tab {
@@ -610,6 +627,28 @@ body {
 
 .tt-github-link:active {
   transform: translateY(0);
+}
+
+/* Accent variant — the Home button while the history view is open. Always
+   carries the accent vocabulary (not only on hover) so it stands out as the
+   active way back. */
+.tt-github-link--accent {
+  color: var(--color-bg);
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 0 18px rgba(212, 180, 140, 0.4);
+}
+
+.tt-github-link--accent:hover {
+  color: var(--color-bg);
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  filter: brightness(1.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 0 24px rgba(212, 180, 140, 0.55);
 }
 
 /* ---------------- Animations ---------------- */

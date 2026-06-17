@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { ArtistChipInput } from './ArtistChipInput'
 import { AlbumArtUpload } from './AlbumArtUpload'
-import { suggestFileName } from '@shared/filename'
+import { splitArtists, suggestFileName } from '@shared/filename'
 import type { Metadata, Source } from '@shared/types'
 
 type Props = {
@@ -11,6 +11,11 @@ type Props = {
   onChange: (metadata: Metadata) => void
   /** Autofill needs a Gemini key; without one the button is hidden. */
   canAutofill: boolean
+  /**
+   * Start with the file name treated as user-edited, so the auto-suggest
+   * doesn't overwrite a name carried in from history.
+   */
+  initialFileNameDirty?: boolean
 }
 
 type FieldKey = 'title' | 'artists' | 'album' | 'fileName'
@@ -18,21 +23,15 @@ type FieldKey = 'title' | 'artists' | 'album' | 'fileName'
 const TYPE_INTERVAL_MS = 18
 const FIELD_STAGGER_MS = 220
 
-function splitArtists(value: string): string[] {
-  return value
-    .split(/[;,]/)
-    .map((s) => s.trim())
-    .filter(Boolean)
-}
-
 export function MetadataForm({
   source,
   metadata,
   onChange,
-  canAutofill
+  canAutofill,
+  initialFileNameDirty = false
 }: Props): React.JSX.Element {
   const [pending, startTransition] = useTransition()
-  const [fileNameDirty, setFileNameDirty] = useState(false)
+  const [fileNameDirty, setFileNameDirty] = useState(initialFileNameDirty)
   const [typing, setTyping] = useState<Set<FieldKey>>(new Set())
   const timeouts = useRef<NodeJS.Timeout[]>([])
   // Tracks the latest metadata so async typewriter ticks can merge into
@@ -42,6 +41,14 @@ export function MetadataForm({
   useEffect(() => {
     metadataRef.current = metadata
   })
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const titleRef = useRef<HTMLInputElement>(null)
+
+  // When the edit step first appears, focus Title so the user can type (or
+  // tab onward) right away. preventScroll keeps the source card in view.
+  useEffect(() => {
+    titleRef.current?.focus({ preventScroll: true })
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -180,6 +187,7 @@ export function MetadataForm({
           </label>
           <input
             id="tt-title"
+            ref={titleRef}
             className={`tt-input ${inputGlowClass('title')}`}
             placeholder="Song title…"
             value={metadata.title}
@@ -223,17 +231,51 @@ export function MetadataForm({
           <label className="tt-label mb-3 block" htmlFor="tt-filename">
             File name
           </label>
-          <input
-            id="tt-filename"
-            className={`tt-input tt-input--mono ${inputGlowClass('fileName')}`}
-            placeholder="artist_song-title.mp3"
-            value={metadata.fileName}
-            onChange={(e) => {
-              setFileNameDirty(true)
-              onChange({ ...metadata, fileName: e.target.value })
+          {/* The `.mp3` extension is a fixed suffix — the user only edits the
+              stem, so it can never be deleted. field-sizing keeps the input
+              hugging the stem so the suffix sits right after it. */}
+          <div
+            onMouseDown={(e) => {
+              // Clicking anywhere in the field (the suffix or the empty space
+              // past the stem) focuses the input with the caret at the end,
+              // just before .mp3 — like a normal single text field.
+              if (e.target !== fileInputRef.current) {
+                e.preventDefault()
+                const el = fileInputRef.current
+                if (el) {
+                  el.focus()
+                  el.setSelectionRange(el.value.length, el.value.length)
+                }
+              }
             }}
-            spellCheck={false}
-          />
+            className={`tt-input tt-input--mono ${inputGlowClass('fileName')} flex items-center focus-within:border-(--color-border-strong) focus-within:bg-(--color-elev-2)`}
+          >
+            <input
+              id="tt-filename"
+              ref={fileInputRef}
+              className="min-w-0 max-w-full bg-transparent outline-none"
+              style={
+                {
+                  fontFamily: 'inherit',
+                  fontSize: 'inherit',
+                  letterSpacing: 'inherit',
+                  color: 'inherit',
+                  fieldSizing: 'content'
+                } as React.CSSProperties
+              }
+              placeholder="artist_song-title"
+              value={metadata.fileName.replace(/\.mp3$/i, '')}
+              onChange={(e) => {
+                setFileNameDirty(true)
+                const stem = e.target.value.replace(/\.mp3$/i, '')
+                onChange({ ...metadata, fileName: stem ? `${stem}.mp3` : '' })
+              }}
+              spellCheck={false}
+            />
+            <span className="shrink-0 select-none" style={{ color: 'var(--color-text-dim)' }}>
+              .mp3
+            </span>
+          </div>
         </div>
       </div>
     </section>

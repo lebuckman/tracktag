@@ -2,7 +2,7 @@ import { promises as fs } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
-import { app, dialog, ipcMain, BrowserWindow } from 'electron'
+import { app, dialog, ipcMain, shell, BrowserWindow } from 'electron'
 
 import { downloadAudio, fetchYouTubeMeta, type YouTubeMeta } from './lib/ytdlp'
 import { convertToMp3 } from './lib/ffmpeg'
@@ -16,7 +16,11 @@ import {
   getGeminiKey,
   setGeminiKey,
   isOnboarded,
-  setOnboarded
+  setOnboarded,
+  getHistory,
+  addHistoryEntry,
+  deleteHistoryEntry,
+  clearHistory
 } from './store'
 import type {
   PickFolderResult,
@@ -44,6 +48,29 @@ async function isDirectory(p: string): Promise<boolean> {
     return stat.isDirectory()
   } catch {
     return false
+  }
+}
+
+async function fileExists(p: string): Promise<boolean> {
+  try {
+    await fs.access(p)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * First free name in `folder` based on `fileName` (`song.mp3`,
+ * `song-1.mp3`, `song-2.mp3`, …). Used when the user chooses "keep both".
+ */
+async function uniqueName(folder: string, fileName: string): Promise<string> {
+  if (!(await fileExists(path.join(folder, fileName)))) return fileName
+  const ext = path.extname(fileName)
+  const stem = fileName.slice(0, fileName.length - ext.length)
+  for (let n = 1; ; n++) {
+    const candidate = `${stem}-${n}${ext}`
+    if (!(await fileExists(path.join(folder, candidate)))) return candidate
   }
 }
 
@@ -165,6 +192,34 @@ async function prefillMetadata(input: PrefillInput): Promise<PrefillOutcome> {
   }
 }
 
+/** Persist a completed save to history (cover art is intentionally omitted). */
+function recordHistory(payload: SavePayload, fileName: string): void {
+  const common = {
+    id: randomUUID(),
+    savedAt: Date.now(),
+    title: payload.title.trim(),
+    artist: payload.artist.trim(),
+    album: payload.album.trim(),
+    fileName
+  }
+  if (payload.kind === 'youtube') {
+    const videoId = parseVideoId(payload.url)
+    addHistoryEntry({
+      ...common,
+      kind: 'youtube',
+      sourceUrl: payload.url,
+      thumbnail: videoId ? thumbnailUrl(videoId) : undefined
+    })
+  } else {
+    addHistoryEntry({
+      ...common,
+      kind: 'file',
+      sourceFilename: path.basename(payload.filePath),
+      sourceFilePath: payload.filePath
+    })
+  }
+}
+
 async function saveFile(payload: SavePayload): Promise<SaveResult> {
   const sessionId = randomUUID()
   const workDir = path.join(scratchRoot(), sessionId)
@@ -181,7 +236,7 @@ async function saveFile(payload: SavePayload): Promise<SaveResult> {
     if (!rawFileName) return { ok: false, error: 'File name is required' }
     if (!rawFolder) return { ok: false, error: 'Save folder is required' }
 
-    const fileName = sanitizeFileName(rawFileName)
+    let fileName = sanitizeFileName(rawFileName)
     if (!fileName) return { ok: false, error: 'File name has no usable characters' }
 
     const folder = expandHome(rawFolder)
@@ -192,12 +247,30 @@ async function saveFile(payload: SavePayload): Promise<SaveResult> {
       return { ok: false, error: 'Trim end must be after start' }
     }
 
+    // Resolve a name collision before any slow work (a YouTube download can
+    // take 10s+) — the first attempt arrives with no `onConflict`, so an
+    // existing file bounces straight back for the user to decide.
+    if (await fileExists(path.join(folder, fileName))) {
+      if (payload.onConflict === 'keepBoth') {
+        fileName = await uniqueName(folder, fileName)
+      } else if (payload.onConflict !== 'overwrite') {
+        return { ok: false, conflict: true, fileName }
+      }
+    }
+
     await fs.mkdir(workDir, { recursive: true })
 
     const trim = start != null || end != null ? { start, end } : undefined
+    const convertOpts = {
+      trim,
+      fade: payload.fade,
+      normalize: payload.normalize
+    }
+    // ffmpeg is needed whenever the audio is altered: a trim, a fade, or
+    // loudness normalization. Otherwise the raw download is used as-is.
+    const needsConvert = !!trim || !!payload.fade || !!payload.normalize
 
     // Two-step: get raw audio → ffmpeg trim/convert → final.mp3
-    // Always pipe through ffmpeg if trim is set, so trim is exact.
     const finalIntermediate = path.join(workDir, 'final.mp3')
 
     if (payload.kind === 'youtube') {
@@ -206,8 +279,8 @@ async function saveFile(payload: SavePayload): Promise<SaveResult> {
       const downloaded = path.join(workDir, 'raw.mp3')
       await downloadAudio(payload.url, downloaded)
 
-      if (trim) {
-        await convertToMp3(downloaded, finalIntermediate, trim)
+      if (needsConvert) {
+        await convertToMp3(downloaded, finalIntermediate, convertOpts)
       } else {
         await fs.rename(downloaded, finalIntermediate)
       }
@@ -217,12 +290,10 @@ async function saveFile(payload: SavePayload): Promise<SaveResult> {
       if (!payload.filePath || !path.isAbsolute(payload.filePath)) {
         return { ok: false, error: 'Missing source file path' }
       }
-      try {
-        await fs.access(payload.filePath)
-      } catch {
+      if (!(await fileExists(payload.filePath))) {
         return { ok: false, error: 'Source file no longer exists' }
       }
-      await convertToMp3(payload.filePath, finalIntermediate, trim)
+      await convertToMp3(payload.filePath, finalIntermediate, convertOpts)
     }
 
     const albumArt =
@@ -248,12 +319,18 @@ async function saveFile(payload: SavePayload): Promise<SaveResult> {
     })
 
     // The file is already on disk at this point. Persisting the last-used
-    // folder is best-effort — failing here must not flip the action to an
-    // error, or the user retries and produces a duplicate file.
+    // folder and history entry is best-effort — failing here must not flip
+    // the action to an error, or the user retries and produces a duplicate.
     try {
       setLastSaveFolder(folder)
     } catch (err) {
       console.error('[saveFile] could not persist last folder', err)
+    }
+
+    try {
+      recordHistory(payload, fileName)
+    } catch (err) {
+      console.error('[saveFile] could not record history', err)
     }
 
     return { ok: true, savedPath: finalPath }
@@ -263,6 +340,17 @@ async function saveFile(payload: SavePayload): Promise<SaveResult> {
   } finally {
     await fs.rm(workDir, { recursive: true, force: true }).catch(() => {})
   }
+}
+
+/** Reveal a saved file in Finder; reports back if it has since moved. */
+async function revealItem(filePath: string): Promise<{ ok: boolean }> {
+  try {
+    await fs.access(filePath)
+  } catch {
+    return { ok: false }
+  }
+  shell.showItemInFolder(filePath)
+  return { ok: true }
 }
 
 async function pickFolder(win: BrowserWindow | null): Promise<PickFolderResult> {
@@ -295,6 +383,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('prefillMetadata', (_e, input: PrefillInput) => prefillMetadata(input))
   ipcMain.handle('saveFile', (_e, payload: SavePayload) => saveFile(payload))
   ipcMain.handle('pickFolder', (e) => pickFolder(BrowserWindow.fromWebContents(e.sender)))
+  ipcMain.handle('revealItem', (_e, filePath: string) => revealItem(filePath))
   ipcMain.handle('readLastFolder', () => getLastSaveFolder())
   ipcMain.handle('setLastFolder', (_e, folder: string) => setLastSaveFolder(folder))
   ipcMain.handle('hasGeminiKey', () => getGeminiKey().length > 0)
@@ -303,6 +392,9 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('setGeminiKey', (_e, key: string) => setGeminiKey(key))
   ipcMain.handle('isOnboarded', () => isOnboarded())
   ipcMain.handle('setOnboarded', () => setOnboarded())
+  ipcMain.handle('getHistory', () => getHistory())
+  ipcMain.handle('deleteHistoryEntry', (_e, id: string) => deleteHistoryEntry(id))
+  ipcMain.handle('clearHistory', () => clearHistory())
 }
 
 /** Remove any scratch dirs left behind by a crashed previous run. */

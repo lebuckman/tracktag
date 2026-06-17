@@ -10,6 +10,7 @@ const api: Api = {
   prefillMetadata: (input: PrefillInput) => ipcRenderer.invoke('prefillMetadata', input),
   saveFile: (payload: SavePayload) => ipcRenderer.invoke('saveFile', payload),
   pickFolder: () => ipcRenderer.invoke('pickFolder'),
+  revealItem: (filePath) => ipcRenderer.invoke('revealItem', filePath),
   readLastFolder: () => ipcRenderer.invoke('readLastFolder'),
   setLastFolder: (folder) => ipcRenderer.invoke('setLastFolder', folder),
   getPathForFile: (file) => webUtils.getPathForFile(file),
@@ -18,6 +19,9 @@ const api: Api = {
   setGeminiKey: (key) => ipcRenderer.invoke('setGeminiKey', key),
   isOnboarded: () => ipcRenderer.invoke('isOnboarded'),
   setOnboarded: () => ipcRenderer.invoke('setOnboarded'),
+  getHistory: () => ipcRenderer.invoke('getHistory'),
+  deleteHistoryEntry: (id) => ipcRenderer.invoke('deleteHistoryEntry', id),
+  clearHistory: () => ipcRenderer.invoke('clearHistory'),
   onUpdateAvailable: (cb) => {
     ipcRenderer.on('update-available', (_e, info: AppUpdateInfo) => cb(info))
   }

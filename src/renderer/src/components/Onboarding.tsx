@@ -1,11 +1,14 @@
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
+import { HomeButton } from './HomeButton'
 
 type Props = {
   /** Whether a key is already stored (settings re-entry vs first run). */
   hasKey: boolean
   /** Reports whether a key exists after the screen closes. */
   onDone: (keySet: boolean) => void
+  /** Settings re-entry (vs first-run): shows a Home button + inline save. */
+  isSettings?: boolean
 }
 
 /**
@@ -13,7 +16,7 @@ type Props = {
  * it only powers Autofill, and the flow works fully by hand without one.
  * In settings the stored key can be revealed (eye toggle) and replaced.
  */
-export function Onboarding({ hasKey, onDone }: Props): React.JSX.Element {
+export function Onboarding({ hasKey, onDone, isSettings = false }: Props): React.JSX.Element {
   const [draft, setDraft] = useState('')
   const [revealed, setRevealed] = useState(false)
   // The stored key, fetched lazily the first time it is revealed. Also
@@ -37,9 +40,35 @@ export function Onboarding({ hasKey, onDone }: Props): React.JSX.Element {
     })
   }
 
+  // Settings: persist the key in place without leaving the screen. Updating
+  // loadedKey clears the dirty state, which re-enables the Home button.
+  function saveKey(): void {
+    const key = draft.trim()
+    if (!key || key === loadedKey) return
+    toast.dismiss('onboarding')
+    startTransition(async () => {
+      try {
+        await window.api.setGeminiKey(key)
+        setLoadedKey(key)
+        toast.success('Key saved', { id: 'onboarding' })
+      } catch {
+        toast.error('Could not save the key', { id: 'onboarding' })
+      }
+    })
+  }
+
+  // Settings: leave to the flow. Disabled while dirty, so this only fires
+  // once edits are saved or cleared; the stored key is left untouched.
+  function goHome(): void {
+    onDone(hasKey || !!loadedKey)
+  }
+
   function toggleReveal(): void {
     if (revealed) {
       setRevealed(false)
+      // Drop back to the fixed-width dots placeholder when nothing was
+      // edited, so hiding doesn't resize the field to the key's length.
+      if (draft === loadedKey) setDraft('')
       return
     }
     if (loadedKey !== null) {
@@ -100,31 +129,50 @@ export function Onboarding({ hasKey, onDone }: Props): React.JSX.Element {
             <label className="tt-label mb-3 block" htmlFor="tt-gemini-key">
               Gemini API key · optional
             </label>
-            <div className="relative">
-              <input
-                id="tt-gemini-key"
-                className="tt-input tt-input--mono"
-                type={revealed ? 'text' : 'password'}
-                placeholder={hasKey ? 'Key saved' : 'AIza…'}
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') save()
-                }}
-                spellCheck={false}
-                autoComplete="off"
-                style={hasKey ? { paddingRight: '3rem' } : undefined}
-              />
-              {hasKey && (
+            <div className="flex items-stretch gap-3">
+              <div className="relative flex-1">
+                <input
+                  id="tt-gemini-key"
+                  className="tt-input tt-input--mono"
+                  type={revealed ? 'text' : 'password'}
+                  placeholder={hasKey ? '••••••••••••' : 'AIza…'}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onFocus={(e) => {
+                    // Highlight the whole key so it's quick to replace.
+                    if (e.target.value) e.target.select()
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      if (isSettings) saveKey()
+                      else save()
+                    }
+                  }}
+                  spellCheck={false}
+                  autoComplete="off"
+                  style={hasKey ? { paddingRight: '3rem' } : undefined}
+                />
+                {hasKey && (
+                  <button
+                    type="button"
+                    onClick={toggleReveal}
+                    aria-label={revealed ? 'Hide key' : 'Show key'}
+                    aria-pressed={revealed}
+                    className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md transition-colors"
+                    style={{ color: revealed ? 'var(--color-text)' : 'var(--color-text-dim)' }}
+                  >
+                    <EyeIcon open={revealed} />
+                  </button>
+                )}
+              </div>
+              {isSettings && (
                 <button
                   type="button"
-                  onClick={toggleReveal}
-                  aria-label={revealed ? 'Hide key' : 'Show key'}
-                  aria-pressed={revealed}
-                  className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md transition-colors"
-                  style={{ color: revealed ? 'var(--color-text)' : 'var(--color-text-dim)' }}
+                  onClick={saveKey}
+                  disabled={!dirty || pending}
+                  className="tt-btn tt-btn-primary shrink-0"
                 >
-                  <EyeIcon open={revealed} />
+                  Save
                 </button>
               )}
             </div>
@@ -142,18 +190,21 @@ export function Onboarding({ hasKey, onDone }: Props): React.JSX.Element {
             </p>
           </div>
 
-          <div className="mt-8 flex justify-end">
-            <button
-              type="button"
-              onClick={save}
-              disabled={pending}
-              className="tt-btn tt-btn-primary"
-            >
-              {buttonLabel}
-            </button>
-          </div>
+          {!isSettings && (
+            <div className="mt-8 flex justify-end">
+              <button
+                type="button"
+                onClick={save}
+                disabled={pending}
+                className="tt-btn tt-btn-primary"
+              >
+                {buttonLabel}
+              </button>
+            </div>
+          )}
         </div>
       </div>
+      {isSettings && <HomeButton onClick={goHome} disabled={dirty} position="settings" />}
     </div>
   )
 }
