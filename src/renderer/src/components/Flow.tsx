@@ -47,6 +47,10 @@ export function Flow({ canAutofill, prefill }: Props): React.JSX.Element {
       : EMPTY_METADATA
   )
   const [resetKey, setResetKey] = useState(0)
+  // Whether the current form still holds the history-prefilled values. Only
+  // then is the carried file name protected from the auto-suggest; cleared
+  // once the user resets or picks a different source.
+  const [fromPrefill, setFromPrefill] = useState(!!prefill)
 
   // Resolve a YouTube history entry back to a full source so it is
   // immediately re-saveable; file entries just prompt for the file. Duration
@@ -119,6 +123,7 @@ export function Flow({ canAutofill, prefill }: Props): React.JSX.Element {
     setTrim(EMPTY_TRIM)
     setAudio(EMPTY_AUDIO)
     setMetadata(EMPTY_METADATA)
+    setFromPrefill(false)
     setResetKey((k) => k + 1)
   }
 
@@ -140,6 +145,8 @@ export function Flow({ canAutofill, prefill }: Props): React.JSX.Element {
               onSource={(s, f) => {
                 setSource(s)
                 setFile(f)
+                // A manually picked source is no longer the prefilled one.
+                setFromPrefill(false)
               }}
             />
           </div>
@@ -161,6 +168,7 @@ export function Flow({ canAutofill, prefill }: Props): React.JSX.Element {
                 setTrim(EMPTY_TRIM)
                 setAudio(EMPTY_AUDIO)
                 setMetadata(EMPTY_METADATA)
+                setFromPrefill(false)
               }
             }}
             trim={trim}
@@ -177,7 +185,7 @@ export function Flow({ canAutofill, prefill }: Props): React.JSX.Element {
                 metadata={metadata}
                 onChange={setMetadata}
                 canAutofill={canAutofill}
-                initialFileNameDirty={!!prefill}
+                initialFileNameDirty={fromPrefill}
               />
             </Reveal>
             <Reveal delay={0.28}>

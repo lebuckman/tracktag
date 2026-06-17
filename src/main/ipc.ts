@@ -293,7 +293,14 @@ async function saveFile(payload: SavePayload): Promise<SaveResult> {
       if (!(await fileExists(payload.filePath))) {
         return { ok: false, error: 'Source file no longer exists' }
       }
-      await convertToMp3(payload.filePath, finalIntermediate, convertOpts)
+      // An MP3 import with no processing is copied as-is — re-encoding it
+      // would only add latency and lose quality. Other formats must convert.
+      const isMp3 = /\.mp3$/i.test(payload.filePath)
+      if (needsConvert || !isMp3) {
+        await convertToMp3(payload.filePath, finalIntermediate, convertOpts)
+      } else {
+        await fs.copyFile(payload.filePath, finalIntermediate)
+      }
     }
 
     const albumArt =

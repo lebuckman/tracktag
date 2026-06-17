@@ -145,10 +145,11 @@ export function CropModal({ src, mime, onCancel, onConfirm }: Props): React.JSX.
       onConfirm(src, mime)
       return
     }
-    // Map the viewport square back to source pixels.
-    const scale = coverScale * zoom
-    const sx = -offset.x / scale
-    const sy = -offset.y / scale
+    // Map the viewport square back to source pixels, reading the live
+    // geometry refs so a fast wheel/drag right before confirm isn't lost.
+    const scale = coverScale * zoomRef.current
+    const sx = -offsetRef.current.x / scale
+    const sy = -offsetRef.current.y / scale
     const sSize = VIEW / scale
 
     const canvas = document.createElement('canvas')

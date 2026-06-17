@@ -21,17 +21,20 @@ export function ConfirmModal({
   onCancel
 }: Props): React.JSX.Element {
   const dialogRef = useRef<HTMLDivElement | null>(null)
-  useFocusTrap(dialogRef)
+  const cancelRef = useRef<HTMLButtonElement | null>(null)
+  // Focus the safe option, so a stray Enter cancels rather than confirms a
+  // destructive action; the user must tab to confirm to activate it.
+  useFocusTrap(dialogRef, cancelRef)
 
-  // Esc cancels, Enter confirms.
+  // Esc cancels. Enter is intentionally not handled globally — it activates
+  // whichever button is focused (Cancel by default).
   useEffect(() => {
     function onKey(e: KeyboardEvent): void {
       if (e.key === 'Escape') onCancel()
-      if (e.key === 'Enter') onConfirm()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onConfirm, onCancel])
+  }, [onCancel])
 
   return createPortal(
     <AnimatePresence>
@@ -77,7 +80,7 @@ export function ConfirmModal({
             </p>
           )}
           <div className="mt-7 flex items-center justify-center gap-3">
-            <button type="button" onClick={onCancel} className="tt-btn">
+            <button ref={cancelRef} type="button" onClick={onCancel} className="tt-btn">
               Cancel
             </button>
             <button type="button" onClick={onConfirm} className="tt-btn tt-btn-primary">

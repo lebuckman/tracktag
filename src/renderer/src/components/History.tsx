@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { ConfirmModal } from './ConfirmModal'
 import type { HistoryEntry } from '@shared/types'
 
@@ -56,15 +57,21 @@ export function History({ onSelect }: Props): React.JSX.Element {
 
   async function deleteSelected(): Promise<void> {
     const ids = [...selected]
-    if (entries && ids.length === entries.length) {
-      await window.api.clearHistory()
-      setEntries([])
-    } else {
-      await Promise.all(ids.map((id) => window.api.deleteHistoryEntry(id)))
-      setEntries((prev) => (prev ? prev.filter((e) => !selected.has(e.id)) : prev))
+    try {
+      if (entries && ids.length === entries.length) {
+        await window.api.clearHistory()
+        setEntries([])
+      } else {
+        await Promise.all(ids.map((id) => window.api.deleteHistoryEntry(id)))
+        setEntries((prev) => (prev ? prev.filter((e) => !selected.has(e.id)) : prev))
+      }
+    } catch {
+      toast.error('Could not remove those entries', { id: 'history-delete' })
+    } finally {
+      // Always close the prompt and leave select mode so the UI can't stick.
+      setConfirming(false)
+      exitSelect()
     }
-    setConfirming(false)
-    exitSelect()
   }
 
   return (
@@ -189,6 +196,9 @@ function HistoryRow({
       tabIndex={0}
       onClick={onActivate}
       onKeyDown={(e) => {
+        // Only the row itself — let a nested control (the link button) handle
+        // its own keys instead of also re-filling the form.
+        if (e.target !== e.currentTarget) return
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
           onActivate()
